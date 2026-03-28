@@ -6,18 +6,13 @@ import {
   query, 
   where, 
   onSnapshot, 
-  addDoc, 
   deleteDoc, 
   doc,
   orderBy,
-  setDoc
+  setDoc,
+  addDoc
 } from 'firebase/firestore';
-import { 
-  ref, 
-  uploadBytes, 
-  getDownloadURL, 
-  deleteObject 
-} from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'sonner';
 
 export const useDocuments = (userId: string | undefined) => {
@@ -56,22 +51,16 @@ export const useDocuments = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const fileId = Math.random().toString(36).substring(7);
-      const storageRef = ref(storage, `users/${userId}/documents/${fileId}_${file.name}`);
-      
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
+      const storageRef = ref(storage, `documents/${userId}/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
 
-      const docData: Omit<DiaryDocument, 'id'> = {
+      await addDoc(collection(db, 'documents'), {
         userId,
         name: file.name,
         url,
-        type: file.type,
-        size: file.size,
-        createdAt: new Date().toISOString(),
-      };
-
-      await addDoc(collection(db, 'documents'), docData);
+        createdAt: new Date().toISOString()
+      });
       toast.success('Datei erfolgreich hochgeladen');
     } catch (error) {
       console.error('Error uploading document:', error);

@@ -47,7 +47,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   onUpload,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['diary', 'documents']));
-  const [isUploading, setIsUploading] = useState(false);
 
   const toggleFolder = (id: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -83,17 +82,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     return tree;
   }, [entries]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      await onUpload(file);
-      setIsUploading(false);
-      // Reset input to allow uploading the same file again if needed
-      e.target.value = '';
-    }
-  };
-
   const handleSummarizeSelected = () => {
     const selectedItems = [
       ...entries.filter(e => selectedIds.has(e.id)),
@@ -107,24 +95,19 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const isSelected = (id: string) => selectedIds.has(id);
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+    <div className="bg-white rounded-none shadow-xl overflow-hidden border border-slate-100">
       <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
         <h3 className="font-serif text-xl font-semibold text-slate-900">Dateien & Einträge</h3>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (
             <button
               onClick={handleSummarizeSelected}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-none hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
             >
               <Sparkles size={14} />
               Auswahl zusammenfassen ({selectedIds.size})
             </button>
           )}
-          <label htmlFor="file-upload" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
-            {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-            Datei hochladen
-          </label>
-          <input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
         </div>
       </div>
 
@@ -211,14 +194,29 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
         {/* Documents Folder */}
         <div>
-          <button
-            onClick={() => toggleFolder('documents')}
-            className="flex items-center gap-2 w-full p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-700 font-bold text-sm"
-          >
-            {expandedFolders.has('documents') ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            <Folder size={18} className="text-emerald-500 fill-emerald-50" />
-            Dokumente
-          </button>
+          <div className="flex items-center justify-between w-full">
+            <button
+              onClick={() => toggleFolder('documents')}
+              className="flex items-center gap-2 w-full p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-700 font-bold text-sm"
+            >
+              {expandedFolders.has('documents') ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              <Folder size={18} className="text-emerald-500 fill-emerald-50" />
+              Dokumente
+            </button>
+            <label className="cursor-pointer p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-all">
+              <Upload size={16} />
+              <input
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    onUpload(e.target.files[0]);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </label>
+          </div>
           
           <AnimatePresence>
             {expandedFolders.has('documents') && (

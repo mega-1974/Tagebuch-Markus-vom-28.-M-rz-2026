@@ -190,7 +190,7 @@ export default function App() {
         Benutzeranweisung: ${prompt || "Erstelle eine prägnante Zusammenfassung der wichtigsten Punkte."}
         
         Inhalte:
-        ${aiItems.map(item => 'content' in item ? `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${item.content}` : `Dokument: ${item.name}`).join('\n\n')}`,
+        ${aiItems.map(item => 'date' in item ? `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${item.content}` : `Dokument: ${item.name}`).join('\n\n')}`,
       });
 
       const response = await model;
@@ -237,7 +237,7 @@ export default function App() {
       doc.setFontSize(22);
       doc.setTextColor(0, 35, 102); // Midnight Blue
       
-      if ('content' in item) {
+      if ('date' in item) {
         doc.text('Tagebucheintrag', 14, 22);
         doc.setFontSize(12);
         doc.setTextColor(100);
@@ -264,7 +264,7 @@ export default function App() {
         doc.text(`Link: ${item.url}`, 14, 64);
       }
       
-      const fileName = 'content' in item 
+      const fileName = 'date' in item 
         ? `eintrag_${format(new Date(item.date), 'yyyy-MM-dd')}.pdf`
         : `dokument_info_${item.name.replace(/\s+/g, '_')}.pdf`;
         
