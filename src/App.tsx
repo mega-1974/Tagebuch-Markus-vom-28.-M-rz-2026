@@ -186,18 +186,54 @@ export default function App() {
     setIsAIProcessing(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-      const model = ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Du bist ein hilfreicher Assistent für ein persönliches Tagebuch. 
+      
+      const parts: any[] = [
+        { text: `Du bist ein hilfreicher Assistent für ein persönliches Tagebuch. 
         Fasse die folgenden Inhalte zusammen. 
-        Benutzeranweisung: ${prompt || "Erstelle eine prägnante Zusammenfassung der wichtigsten Punkte."}
-        
-        Inhalte:
-        ${aiItems.map(item => 'date' in item ? `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${item.content}` : `Dokument: ${item.name}`).join('\n\n')}`,
+        Benutzeranweisung: ${prompt || "Erstelle eine prägnante Zusammenfassung der wichtigsten Punkte."}\n\nInhalte:` }
+      ];
+
+      for (const item of aiItems) {
+        if ('date' in item) {
+          parts.push({ text: `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${item.content}\n\n` });
+        } else {
+          try {
+            const response = await fetch(item.url);
+            const blob = await response.blob();
+            const base64 = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            
+            parts.push({ text: `Dokument (${item.name}):\n` });
+            parts.push({
+              inlineData: {
+                mimeType: item.type || (item.name.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'),
+                data: base64,
+              }
+            });
+            parts.push({ text: `\n\n` });
+          } catch (err) {
+            console.error('Failed to fetch document for summary:', err);
+            parts.push({ text: `Dokument (${item.name}): [Inhalt konnte nicht geladen werden]\n\n` });
+          }
+        }
+      }
+
+      const model = ai.models.generateContent({
+        model: "gemini-3.1-pro-preview", // Use pro for complex multimodal tasks
+        contents: { parts },
       });
 
       const response = await model;
-      const summaryText = response.text;
+      let summaryText = 'Keine Zusammenfassung generiert.';
+      try {
+        summaryText = response.text || summaryText;
+      } catch (e) {
+        console.warn('Could not extract text from response, possibly blocked by safety settings.', e);
+        summaryText = 'Die Zusammenfassung konnte aufgrund von Sicherheitsrichtlinien nicht generiert werden.';
+      }
 
       setConfirmModal({
         isOpen: true,

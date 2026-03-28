@@ -6,13 +6,31 @@ import {
   query, 
   where, 
   onSnapshot, 
-  addDoc, 
   deleteDoc, 
   doc,
   orderBy,
   setDoc
 } from 'firebase/firestore';
 import { toast } from 'sonner';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export const useSummaries = (userId: string | undefined) => {
   const [summaries, setSummaries] = useState<AISummary[]>([]);
@@ -39,7 +57,7 @@ export const useSummaries = (userId: string | undefined) => {
       setSummaries(docs);
       setLoading(false);
     }, (error) => {
-      console.error('Error fetching summaries:', error);
+      handleFirestoreError(error, OperationType.LIST, 'summaries');
       setLoading(false);
     });
 
@@ -57,7 +75,7 @@ export const useSummaries = (userId: string | undefined) => {
       });
       toast.success('Zusammenfassung gespeichert');
     } catch (error) {
-      console.error('Error saving summary:', error);
+      handleFirestoreError(error, OperationType.CREATE, 'summaries');
       toast.error('Fehler beim Speichern der Zusammenfassung');
     }
   };
@@ -84,7 +102,7 @@ export const useSummaries = (userId: string | undefined) => {
         toast.success('Zusammenfassung in den Papierkorb verschoben');
       }
     } catch (error) {
-      console.error('Error deleting summary:', error);
+      handleFirestoreError(error, OperationType.DELETE, `summaries/${summaryId}`);
       toast.error('Fehler beim Verschieben in den Papierkorb');
     }
   };
