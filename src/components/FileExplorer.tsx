@@ -240,9 +240,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                         <span className="text-[9px] text-slate-400">({(doc.size / 1024).toFixed(1)} KB)</span>
                       </div>
                       <div className="hidden group-hover:flex items-center gap-1">
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-emerald-600 transition-all" title="Herunterladen">
+                        <button onClick={() => window.open(doc.url, '_blank')} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-emerald-600 transition-all" title="Herunterladen">
                           <Download size={14} />
-                        </a>
+                        </button>
                         <button onClick={() => onDeleteDocument(doc)} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-red-600 transition-all" title="Löschen">
                           <Trash2 size={14} />
                         </button>
