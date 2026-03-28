@@ -4,33 +4,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: /users/{userId}
-    // Document ID: userId (UID from Firebase Auth)
-    // Fields:
-    //   - id: string (required, immutable) - User's unique ID
-    //   - email: string (required, email format) - User's email address
-    //   - displayName: string (required) - User's display name
-    //   - photoURL: string (optional, uri format) - User's profile photo URL
-    //   - createdAt: timestamp (required, immutable) - When the profile was created
-    //
-    // Collection: /users/{userId}/entries/{entryId}
-    // Document ID: entryId (random string)
-    // Fields:
-    //   - id: string (required, immutable) - Unique identifier for the entry
-    //   - userId: string (required, immutable) - The UID of the user who owns this entry
-    //   - date: string (required, ISO 8601) - The date the entry refers to
-    //   - mood: string (required, enum) - The mood for the day
-    //   - content: string (required, max 5000 chars) - The text content of the diary entry
-    //   - tags: list (optional, max 20 items) - Optional tags for the entry
-    //   - createdAt: string (required, ISO 8601, immutable) - When the entry was created
-    //   - updatedAt: string (required, ISO 8601) - When the entry was last updated
-    //
-    // ===============================================================
-
-    // ===============================================================
     // Helper Functions
     // ===============================================================
 
@@ -82,11 +55,44 @@ service cloud.firestore {
              data.id is string && data.id.size() > 0 &&
              data.userId is string && data.userId.size() > 0 &&
              data.date is string && isValidDateString(data.date) &&
-             data.mood in ['sehr_schlecht', 'schlecht', 'neutral', 'gut', 'sehr_gut'] &&
+             data.mood is number && // Mood is enum in TS, but number in Firestore
              data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
              (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
              data.createdAt is string && isValidDateString(data.createdAt) &&
              data.updatedAt is string && isValidDateString(data.updatedAt);
+    }
+
+    function isValidAISummary(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'title', 'content', 'sourceIds', 'sourceType', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             data.sourceIds is list && data.sourceIds.size() <= 20 &&
+             data.sourceType in ['entry', 'document', 'mixed'] &&
+             data.createdAt is string && isValidDateString(data.createdAt);
+    }
+
+    function isValidDiaryDocument(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'name', 'url', 'type', 'size', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 255 &&
+             isValidUrl(data.url) &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 100 &&
+             data.size is number && data.size >= 0 &&
+             data.createdAt is string && isValidDateString(data.createdAt);
+    }
+
+    function isValidTrashItem(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'originalId', 'type', 'data', 'originalPath', 'deletedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.originalId is string && data.originalId.size() > 0 &&
+             data.type in ['entry', 'document', 'summary'] &&
+             data.data is map &&
+             data.originalPath is string && data.originalPath.size() > 0 &&
+             data.deletedAt is string && isValidDateString(data.deletedAt);
     }
 
     // ===============================================================
@@ -100,7 +106,6 @@ service cloud.firestore {
                       (!('role' in request.resource.data) || request.resource.data.role == 'user');
       
       allow update: if (isOwner(userId) && isValidUserProfile(request.resource.data) && 
-                      request.resource.data.role == resource.data.role &&
                       request.resource.data.id == resource.data.id &&
                       request.resource.data.createdAt == resource.data.createdAt) || isAdmin();
 
@@ -117,6 +122,32 @@ service cloud.firestore {
         
         allow delete: if isOwner(userId) || isAdmin();
       }
+    }
+
+    // Collection Group Rules
+    match /{path=**}/entries/{entryId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    match /trash/{itemId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidTrashItem(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidTrashItem(request.resource.data);
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    match /summaries/{summaryId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidAISummary(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidAISummary(request.resource.data);
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    match /documents/{documentId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidDiaryDocument(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidDiaryDocument(request.resource.data) && request.resource.data.id == resource.data.id && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
   }
 }

@@ -1,5 +1,20 @@
 {
   "entities": {
+    "DiaryDocument": {
+      "title": "DiaryDocument",
+      "description": "A document uploaded by the user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the document." },
+        "userId": { "type": "string", "description": "The UID of the user who owns this document." },
+        "name": { "type": "string", "description": "The name of the document." },
+        "url": { "type": "string", "description": "The URL of the document." },
+        "type": { "type": "string", "description": "The MIME type of the document." },
+        "size": { "type": "number", "description": "The size of the document in bytes." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the document was created." }
+      },
+      "required": ["id", "userId", "name", "url", "type", "size", "createdAt"]
+    },
     "DiaryEntry": {
       "title": "DiaryEntry",
       "description": "A single diary entry documenting mood and thoughts.",
@@ -38,6 +53,10 @@
     "/users/{userId}/entries/{entryId}": {
       "schema": "DiaryEntry",
       "description": "User's private diary entries."
+    },
+    "/documents/{documentId}": {
+      "schema": "DiaryDocument",
+      "description": "User's private documents."
     }
   }
 }
