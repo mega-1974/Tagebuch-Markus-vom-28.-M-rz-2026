@@ -17,7 +17,18 @@ export const useAuth = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Check if user profile exists in Firestore
+        // Optimistically set user to unblock UI immediately
+        const optimisticUser: UserProfile = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || 'Nutzer',
+          photoURL: firebaseUser.photoURL || `https://picsum.photos/seed/${firebaseUser.uid}/200/200`,
+          createdAt: new Date().toISOString(),
+        };
+        setUser(optimisticUser);
+        setLoading(false);
+
+        // Check if user profile exists in Firestore in the background
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         try {
           const userDoc = await getDoc(userDocRef);
@@ -26,34 +37,19 @@ export const useAuth = () => {
             setUser(userDoc.data() as UserProfile);
           } else {
             // Create new user profile
-            const newUser: UserProfile = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              displayName: firebaseUser.displayName || 'Unbekannter Nutzer',
-              photoURL: firebaseUser.photoURL || `https://picsum.photos/seed/${firebaseUser.uid}/200/200`,
-              createdAt: new Date().toISOString(),
-            };
-            await setDoc(userDocRef, newUser);
-            setUser(newUser);
+            await setDoc(userDocRef, optimisticUser);
           }
         } catch (error: any) {
           console.error('Error fetching user profile:', error);
-          // Fallback to Firebase Auth user info if Firestore is unreachable
-          setUser({
-            id: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName || 'Nutzer (Offline-Modus)',
-            photoURL: firebaseUser.photoURL || `https://picsum.photos/seed/${firebaseUser.uid}/200/200`,
-            createdAt: new Date().toISOString(),
-          });
           if (error.message && error.message.includes('the client is offline')) {
+            // We already set the optimistic user, so just show a toast
             toast.error('Firestore ist offline. Daten werden aktuell nur lokal gespeichert.');
           }
         }
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     }, (error: any) => {
       console.error('Auth state change error:', error);
       if (error.message && error.message.includes('the client is offline')) {

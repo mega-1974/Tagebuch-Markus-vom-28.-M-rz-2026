@@ -5,9 +5,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { DiaryEntry, Mood } from '../types';
-import { MoodSelector } from './MoodSelector';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Save, Tag as TagIcon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X, Save, Tag as TagIcon, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface DiaryEntryFormProps {
   entry?: DiaryEntry | null;
@@ -15,17 +15,15 @@ interface DiaryEntryFormProps {
   onCancel: () => void;
 }
 
-import { JournalingPrompts } from './JournalingPrompts';
-
 export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, onCancel }) => {
-  const [mood, setMood] = useState<Mood | null>(entry?.mood || null);
+  const [date, setDate] = useState(entry?.date ? format(new Date(entry.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
   const [content, setContent] = useState(entry?.content || '');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(entry?.tags || []);
 
   useEffect(() => {
     if (entry) {
-      setMood(entry.mood);
+      setDate(format(new Date(entry.date), 'yyyy-MM-dd'));
       setContent(entry.content);
       setTags(entry.tags || []);
     }
@@ -46,12 +44,12 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
   };
 
   const handleSave = () => {
-    if (!mood || !content.trim()) return;
+    if (!content.trim()) return;
     onSave({
-      mood,
+      mood: Mood.NEUTRAL,
       content,
       tags,
-      date: entry?.date || new Date().toISOString(),
+      date: new Date(date).toISOString(),
     });
   };
 
@@ -66,7 +64,7 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
         <div className="p-8 overflow-y-auto flex-1">
           <div className="flex justify-between items-center mb-8">
             <h2 className="font-serif text-2xl font-medium text-stone-800">
-              {entry ? 'Eintrag bearbeiten' : 'Wie geht es dir heute?'}
+              {entry ? 'Eintrag bearbeiten' : 'Mein Tagebuch'}
             </h2>
             <button
               onClick={onCancel}
@@ -79,23 +77,28 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
           <div className="space-y-8">
             <section>
               <label className="block text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-3">
-                Deine Stimmung
+                Datum des Geschehens
               </label>
-              <MoodSelector selectedMood={mood} onSelectMood={setMood} />
+              <div className="relative">
+                <Calendar size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-stone-50 rounded-2xl border border-stone-100 focus:border-stone-300 focus:ring-0 transition-all text-stone-700"
+                />
+              </div>
             </section>
 
             <section>
               <label className="block text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-3">
                 Deine Gedanken
               </label>
-              <div className="mb-4">
-                <JournalingPrompts />
-              </div>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Schreibe hier, was dich heute beschäftigt..."
-                className="w-full h-48 p-6 bg-stone-50 rounded-3xl border border-stone-100 focus:border-stone-300 focus:ring-0 transition-all resize-none text-stone-700 placeholder:text-stone-300"
+                className="w-full h-64 p-6 bg-stone-50 rounded-3xl border border-stone-100 focus:border-stone-300 focus:ring-0 transition-all resize-none text-stone-700 placeholder:text-stone-300"
               />
             </section>
 
@@ -140,7 +143,7 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
           </button>
           <button
             onClick={handleSave}
-            disabled={!mood || !content.trim()}
+            disabled={!content.trim()}
             className="flex items-center gap-2 px-8 py-3 bg-stone-800 text-white rounded-full font-medium hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-stone-200"
           >
             <Save size={18} />

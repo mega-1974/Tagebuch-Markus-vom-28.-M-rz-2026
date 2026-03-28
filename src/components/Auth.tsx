@@ -33,7 +33,7 @@ export const Auth: React.FC<AuthProps> = ({ onSignIn }) => {
 
         <button
           onClick={onSignIn}
-          className="w-full flex items-center justify-center gap-3 py-4 bg-stone-800 text-white rounded-full font-medium hover:bg-stone-700 transition-all shadow-xl shadow-stone-200 group mb-4"
+          className="w-full flex items-center justify-center gap-3 py-4 text-white rounded-full font-bold transition-all shadow-xl shadow-blue-200 group mb-4 metallic-gloss"
         >
           <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
           Mit Google anmelden

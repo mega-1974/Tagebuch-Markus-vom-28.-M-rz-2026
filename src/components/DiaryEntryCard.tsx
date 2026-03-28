@@ -30,19 +30,15 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-3xl"
-            style={{ backgroundColor: `${MOOD_COLORS[entry.mood]}20` }}
-          >
-            {MOOD_EMOJIS[entry.mood]}
+          <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center text-stone-400">
+            <Calendar size={20} />
           </div>
           <div>
             <h3 className="font-serif text-lg font-medium text-stone-800">
-              {MOOD_LABELS[entry.mood]}
+              {formattedDate}
             </h3>
             <div className="flex items-center gap-1 text-xs text-stone-400">
-              <Calendar size={12} />
-              <span>{formattedDate}</span>
+              <span>Eintrag vom {format(date, 'HH:mm')} Uhr</span>
             </div>
           </div>
         </div>

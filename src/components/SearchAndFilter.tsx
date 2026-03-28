@@ -12,8 +12,6 @@ import { motion, AnimatePresence } from 'motion/react';
 interface SearchAndFilterProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedMoodFilter: Mood | null;
-  setSelectedMoodFilter: (mood: Mood | null) => void;
   availableTags: string[];
   selectedTags: string[];
   setSelectedTags: (tags: string[]) => void;
@@ -22,8 +20,6 @@ interface SearchAndFilterProps {
 export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
   searchQuery,
   setSearchQuery,
-  selectedMoodFilter,
-  setSelectedMoodFilter,
   availableTags,
   selectedTags,
   setSelectedTags,
@@ -40,11 +36,10 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
 
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedMoodFilter(null);
     setSelectedTags([]);
   };
 
-  const hasActiveFilters = searchQuery || selectedMoodFilter || selectedTags.length > 0;
+  const hasActiveFilters = searchQuery || selectedTags.length > 0;
 
   return (
     <div className="space-y-4 mb-12">
@@ -102,30 +97,6 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
               </div>
 
               <div className="space-y-6">
-                <section>
-                  <label className="block text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-4">
-                    Nach Stimmung filtern
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {(Object.keys(MOOD_EMOJIS) as unknown as Mood[]).map((mood) => (
-                      <button
-                        key={mood}
-                        onClick={() =>
-                          setSelectedMoodFilter(selectedMoodFilter === Number(mood) ? null : Number(mood))
-                        }
-                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-medium transition-all border ${
-                          selectedMoodFilter === Number(mood)
-                            ? 'bg-stone-800 text-white border-stone-800 shadow-lg shadow-stone-100'
-                            : 'bg-stone-50 text-stone-500 border-stone-100 hover:bg-stone-100'
-                        }`}
-                      >
-                        <span>{MOOD_EMOJIS[Number(mood) as Mood]}</span>
-                        <span>{MOOD_LABELS[Number(mood) as Mood]}</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
                 {availableTags.length > 0 && (
                   <section>
                     <label className="block text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-4">

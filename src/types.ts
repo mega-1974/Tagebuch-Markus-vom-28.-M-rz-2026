@@ -29,3 +29,33 @@ export interface UserProfile {
   photoURL: string;
   createdAt: string;
 }
+
+export interface DiaryDocument {
+  id: string;
+  userId: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  createdAt: string;
+}
+
+export interface AISummary {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  sourceIds: string[];
+  sourceType: 'entry' | 'document' | 'mixed';
+  createdAt: string;
+}
+
+export interface TrashItem {
+  id: string;
+  userId: string;
+  originalId: string;
+  type: 'entry' | 'document' | 'summary';
+  data: any;
+  originalPath: string;
+  deletedAt: string;
+}

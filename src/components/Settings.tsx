@@ -10,7 +10,7 @@ import { Shield, Database, Cloud, Download, Trash2, Info } from 'lucide-react';
 
 interface SettingsProps {
   user: UserProfile;
-  onExportData: (format: 'json' | 'csv') => void;
+  onExportData: (format: 'json' | 'pdf') => void;
   onClearLocalData: () => void;
 }
 
@@ -64,10 +64,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
           icon: Download,
         },
         {
-          label: 'Daten exportieren (CSV)',
-          description: 'Lade deine Einträge als CSV-Datei für Excel oder Numbers herunter.',
-          action: () => onExportData('csv'),
-          actionLabel: 'CSV Export',
+          label: 'Daten exportieren (PDF)',
+          description: 'Lade deine Einträge als schön formatierte PDF-Datei herunter.',
+          action: () => onExportData('pdf'),
+          actionLabel: 'PDF Export',
           icon: Download,
         },
         {
@@ -84,19 +84,19 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
 
   return (
     <div className="space-y-12">
-      <div className="bg-white rounded-[40px] p-10 border border-stone-100 shadow-sm">
+      <div className="bg-white rounded-[40px] p-10 border border-blue-100 shadow-xl shadow-blue-900/5">
         <div className="flex items-center gap-6 mb-10">
           <img
             src={user.photoURL}
             alt={user.displayName}
             referrerPolicy="no-referrer"
-            className="w-20 h-20 rounded-[32px] object-cover border-4 border-[#f5f5f0] shadow-sm"
+            className="w-20 h-20 rounded-[32px] object-cover border-4 border-blue-50 shadow-md"
           />
           <div>
-            <h3 className="font-serif text-2xl font-medium text-stone-800 tracking-tight">
+            <h3 className="font-serif text-3xl font-bold text-slate-900 tracking-tight">
               {user.displayName}
             </h3>
-            <p className="text-stone-400 text-sm">{user.email}</p>
+            <p className="text-slate-400 text-sm font-medium">{user.email}</p>
           </div>
         </div>
 
@@ -104,10 +104,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
           {settingsSections.map((section) => (
             <div key={section.id} className="space-y-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-stone-100 rounded-2xl flex items-center justify-center text-stone-500">
+                <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-primary">
                   <section.icon size={20} />
                 </div>
-                <h4 className="font-serif text-lg font-medium text-stone-800 tracking-tight">
+                <h4 className="font-serif text-xl font-bold text-slate-900 tracking-tight">
                   {section.title}
                 </h4>
               </div>
@@ -116,26 +116,26 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
                 {section.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-6 bg-stone-50 rounded-3xl border border-stone-100 flex flex-col gap-4"
+                    className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col gap-4 hover:border-blue-100 transition-colors"
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-stone-400 border border-stone-100">
+                      <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center text-primary border border-blue-50 shadow-sm">
                         <item.icon size={16} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-stone-800 mb-1">{item.label}</p>
-                        <p className="text-xs text-stone-400 leading-relaxed">{item.description}</p>
+                        <p className="text-sm font-bold text-slate-900 mb-1">{item.label}</p>
+                        <p className="text-xs text-slate-400 font-medium leading-relaxed">{item.description}</p>
                       </div>
                     </div>
 
                     {item.status && (
-                      <div className={`flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full w-fit border ${
+                      <div className={`flex items-center gap-2 text-[10px] uppercase tracking-widest font-black px-3 py-1.5 rounded-full w-fit border ${
                         item.statusColor === 'amber' 
                           ? 'text-amber-500 bg-amber-50 border-amber-100' 
-                          : 'text-green-500 bg-green-50 border-green-100'
+                          : 'text-blue-600 bg-blue-50 border-blue-100'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                          item.statusColor === 'amber' ? 'bg-amber-500' : 'bg-green-500'
+                          item.statusColor === 'amber' ? 'bg-amber-500' : 'bg-blue-500'
                         }`} />
                         {item.status}
                       </div>
@@ -147,7 +147,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
                         className={`w-full py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
                           item.danger
                             ? 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100'
-                            : 'bg-stone-800 text-white hover:bg-stone-700 shadow-lg shadow-stone-100'
+                            : 'metallic-gloss text-white shadow-lg shadow-blue-100'
                         }`}
                       >
                         {item.actionLabel}
@@ -161,13 +161,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
         </div>
       </div>
 
-      <div className="bg-stone-800 rounded-[40px] p-10 text-white flex items-center gap-8 shadow-2xl shadow-stone-200">
-        <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-white">
+      <div className="metallic-gloss rounded-[40px] p-10 text-white flex items-center gap-8 shadow-2xl shadow-blue-200">
+        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-white backdrop-blur-sm">
           <Info size={32} />
         </div>
         <div>
-          <h4 className="font-serif text-xl font-medium mb-2 tracking-tight">Über Mindful Path</h4>
-          <p className="text-white/60 text-sm leading-relaxed max-w-lg">
+          <h4 className="font-serif text-2xl font-bold mb-2 tracking-tight">Über Mindful Path</h4>
+          <p className="text-white/80 text-sm font-medium leading-relaxed max-w-lg">
             Diese App wurde entwickelt, um dich auf deinem Weg zu unterstützen. 
             Deine Daten gehören dir und sind jederzeit sicher verschlüsselt. 
             Denke daran: Du bist nicht allein.
