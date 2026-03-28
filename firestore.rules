@@ -56,10 +56,10 @@ service cloud.firestore {
              data.userId is string && data.userId.size() > 0 &&
              data.date is string && isValidDateString(data.date) &&
              data.mood is number && // Mood is enum in TS, but number in Firestore
-             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
-             (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
-             data.createdAt is string && isValidDateString(data.createdAt) &&
-             data.updatedAt is string && isValidDateString(data.updatedAt);
+             data.content is string && data.content.size() > 0 && data.content.size() < 20000 &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 50)) &&
+             (!('createdAt' in data) || (data.createdAt is string && isValidDateString(data.createdAt))) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && isValidDateString(data.updatedAt)));
     }
 
     function isValidAISummary(data) {
@@ -129,7 +129,21 @@ service cloud.firestore {
         allow update: if isOwner(userId) && isValidDiaryEntry(request.resource.data) && 
                         request.resource.data.id == resource.data.id &&
                         request.resource.data.userId == resource.data.userId &&
-                        request.resource.data.createdAt == resource.data.createdAt;
+                        (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+        
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+
+      match /years/{year}/months/{month}/entries/{entryId} {
+        allow read: if isOwner(userId) || isAdmin();
+        
+        allow create: if isOwner(userId) && isValidDiaryEntry(request.resource.data) && 
+                        request.resource.data.userId == userId;
+        
+        allow update: if isOwner(userId) && isValidDiaryEntry(request.resource.data) && 
+                        request.resource.data.id == resource.data.id &&
+                        request.resource.data.userId == resource.data.userId &&
+                        (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
         
         allow delete: if isOwner(userId) || isAdmin();
       }
@@ -139,7 +153,7 @@ service cloud.firestore {
     match /{path=**}/entries/{entryId} {
       allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
       allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidDiaryEntry(request.resource.data);
-      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidDiaryEntry(request.resource.data) && request.resource.data.id == resource.data.id && request.resource.data.createdAt == resource.data.createdAt;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidDiaryEntry(request.resource.data) && request.resource.data.id == resource.data.id && (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
       allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 

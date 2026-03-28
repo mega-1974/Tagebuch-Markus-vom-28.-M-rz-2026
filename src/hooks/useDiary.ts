@@ -197,6 +197,7 @@ export const useDiary = (userId: string | undefined) => {
         const path = getEntryPath(entry.date, id);
         const trashRef = doc(collection(db, 'trash'));
         await setDoc(trashRef, {
+          id: trashRef.id,
           userId,
           originalId: id,
           type: 'entry',

@@ -50,7 +50,11 @@ export const useSummaries = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      await addDoc(collection(db, 'summaries'), summaryData);
+      const summaryRef = doc(collection(db, 'summaries'));
+      await setDoc(summaryRef, {
+        ...summaryData,
+        id: summaryRef.id
+      });
       toast.success('Zusammenfassung gespeichert');
     } catch (error) {
       console.error('Error saving summary:', error);
@@ -67,6 +71,7 @@ export const useSummaries = (userId: string | undefined) => {
         // Move to trash
         const trashRef = doc(collection(db, 'trash'));
         await setDoc(trashRef, {
+          id: trashRef.id,
           userId,
           originalId: summaryId,
           type: 'summary',

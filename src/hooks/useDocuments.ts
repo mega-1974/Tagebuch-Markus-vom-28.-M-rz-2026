@@ -55,8 +55,9 @@ export const useDocuments = (userId: string | undefined) => {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      await addDoc(collection(db, 'documents'), {
-        id: storageRef.name, // Using storageRef name as ID, or generate a new one
+      const docRef = doc(collection(db, 'documents'));
+      await setDoc(docRef, {
+        id: docRef.id,
         userId,
         name: file.name,
         url,
@@ -78,6 +79,7 @@ export const useDocuments = (userId: string | undefined) => {
       // Move to trash
       const trashRef = doc(collection(db, 'trash'));
       await setDoc(trashRef, {
+        id: trashRef.id,
         userId,
         originalId: document.id,
         type: 'document',
