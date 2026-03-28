@@ -56,9 +56,12 @@ export const useDocuments = (userId: string | undefined) => {
       const url = await getDownloadURL(storageRef);
 
       await addDoc(collection(db, 'documents'), {
+        id: storageRef.name, // Using storageRef name as ID, or generate a new one
         userId,
         name: file.name,
         url,
+        type: file.type || 'application/octet-stream',
+        size: file.size,
         createdAt: new Date().toISOString()
       });
       toast.success('Datei erfolgreich hochgeladen');

@@ -99,6 +99,10 @@ service cloud.firestore {
     // Rules
     // ===============================================================
 
+    match /folder_structure/{docId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       

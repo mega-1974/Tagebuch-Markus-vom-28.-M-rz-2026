@@ -12,9 +12,21 @@ interface SettingsProps {
   user: UserProfile;
   onExportData: (format: 'json' | 'pdf') => void;
   onClearLocalData: () => void;
+  isBackupEnabled: boolean;
+  onToggleBackup: (enabled: boolean) => void;
+  lastBackupTime: string | null;
+  isCloudConnected: boolean;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearLocalData }) => {
+export const Settings: React.FC<SettingsProps> = ({ 
+  user, 
+  onExportData, 
+  onClearLocalData,
+  isBackupEnabled,
+  onToggleBackup,
+  lastBackupTime,
+  isCloudConnected
+}) => {
   const settingsSections: {
     id: string;
     title: string;
@@ -28,6 +40,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
       action?: () => void;
       actionLabel?: string;
       danger?: boolean;
+      toggle?: boolean;
     }[];
   }[] = [
     {
@@ -38,16 +51,19 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
         {
           label: 'Cloud-Synchronisierung',
           description: 'Deine Daten werden sicher in der Google Cloud verschlüsselt gespeichert.',
-          status: 'Aktiviert',
-          statusColor: 'green',
+          status: isCloudConnected ? 'Verbunden' : 'Verbindung gestört',
+          statusColor: isCloudConnected ? 'green' : 'red',
           icon: Cloud,
         },
         {
           label: 'Lokale Sicherung',
-          description: 'Eine Kopie deiner Einträge wird lokal auf diesem Gerät gespeichert.',
-          status: 'Aktiviert',
-          statusColor: 'green',
+          description: lastBackupTime 
+            ? `Zuletzt gesichert am: ${new Date(lastBackupTime).toLocaleString('de-DE')}`
+            : 'Keine Sicherung vorhanden.',
+          status: isBackupEnabled ? 'Aktiviert' : 'Deaktiviert',
+          statusColor: isBackupEnabled ? 'green' : 'amber',
           icon: Database,
+          toggle: true,
         },
       ],
     },
@@ -141,7 +157,20 @@ export const Settings: React.FC<SettingsProps> = ({ user, onExportData, onClearL
                       </div>
                     )}
 
-                    {item.action && (
+                    {item.toggle && (
+                      <button
+                        onClick={() => onToggleBackup(!isBackupEnabled)}
+                        className={`w-full py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${
+                          isBackupEnabled
+                            ? 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100'
+                            : 'metallic-gloss text-white shadow-lg shadow-blue-100'
+                        }`}
+                      >
+                        {isBackupEnabled ? 'Deaktivieren' : 'Aktivieren'}
+                      </button>
+                    )}
+
+                    {item.action && !item.toggle && (
                       <button
                         onClick={item.action}
                         className={`w-full py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all ${

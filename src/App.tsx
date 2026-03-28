@@ -18,6 +18,8 @@ import { UserOptions } from 'jspdf-autotable';
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: UserOptions) => void;
 }
+import { localBackupService } from './services/localBackupService';
+import { useCloudStatus } from './hooks/useCloudStatus';
 import { Layout } from './components/Layout';
 import { DiaryEntryCard } from './components/DiaryEntryCard';
 import { DiaryEntryForm } from './components/DiaryEntryForm';
@@ -41,6 +43,7 @@ import { de } from 'date-fns/locale';
 
 export default function App() {
   const { user, loading: authLoading, signIn, signOut } = useAuth();
+  const isCloudConnected = useCloudStatus();
   const { entries, loading: diaryLoading, addEntry, updateEntry, deleteEntry } = useDiary(user?.id);
   const { documents, loading: docsLoading, uploadDocument, deleteDocument } = useDocuments(user?.id);
   const { summaries, loading: summariesLoading, saveSummary, deleteSummary } = useSummaries(user?.id);
@@ -599,6 +602,15 @@ export default function App() {
                 user={user}
                 onExportData={handleExportData}
                 onClearLocalData={handleClearLocalData}
+                isBackupEnabled={localBackupService.isBackupEnabled()}
+                onToggleBackup={(enabled) => {
+                  localBackupService.setBackupEnabled(enabled);
+                  // Force re-render to update UI
+                  setActiveTab('home');
+                  setTimeout(() => setActiveTab('settings'), 0);
+                }}
+                lastBackupTime={localBackupService.getLastBackupTime()}
+                isCloudConnected={isCloudConnected}
               />
             )}
           </div>
