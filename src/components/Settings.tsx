@@ -148,10 +148,20 @@ export const Settings: React.FC<SettingsProps> = ({
                       <div className={`flex items-center gap-2 text-[10px] uppercase tracking-widest font-black px-3 py-1.5 rounded-full w-fit border ${
                         item.statusColor === 'amber' 
                           ? 'text-amber-500 bg-amber-50 border-amber-100' 
-                          : 'text-blue-600 bg-blue-50 border-blue-100'
+                          : item.statusColor === 'green'
+                            ? 'text-green-600 bg-green-50 border-green-100'
+                            : item.statusColor === 'red'
+                              ? 'text-red-600 bg-red-50 border-red-100'
+                              : 'text-blue-600 bg-blue-50 border-blue-100'
                       }`}>
                         <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                          item.statusColor === 'amber' ? 'bg-amber-500' : 'bg-blue-500'
+                          item.statusColor === 'amber' 
+                            ? 'bg-amber-500' 
+                            : item.statusColor === 'green'
+                              ? 'bg-green-500'
+                              : item.statusColor === 'red'
+                                ? 'bg-red-500'
+                                : 'bg-blue-500'
                         }`} />
                         {item.status}
                       </div>

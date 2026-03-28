@@ -145,7 +145,8 @@ export const useDiary = (userId: string | undefined) => {
         console.warn("Entry saved locally only (Firestore offline)");
         toast.info('Eintrag lokal gespeichert. Synchronisierung erfolgt später.');
       } else {
-        handleFirestoreError(error, OperationType.CREATE, `folder_structure/${entryId}`);
+        const path = getEntryPath(date, entryId);
+        handleFirestoreError(error, OperationType.CREATE, path);
       }
     }
   };
@@ -172,7 +173,10 @@ export const useDiary = (userId: string | undefined) => {
         await updateDoc(doc(db, path), updatedData);
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `folder_structure/${id}`);
+      const localEntries = localBackupService.getEntries();
+      const entry = localEntries.find(e => e.id === id) || entries.find(e => e.id === id);
+      const path = entry ? getEntryPath(entry.date, id) : `unknown_path/${id}`;
+      handleFirestoreError(error, OperationType.UPDATE, path);
     }
   };
 
@@ -205,7 +209,10 @@ export const useDiary = (userId: string | undefined) => {
         await deleteDoc(doc(db, path));
       }
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `folder_structure/${id}`);
+      const localEntries = localBackupService.getEntries();
+      const entry = localEntries.find(e => e.id === id) || entries.find(e => e.id === id);
+      const path = entry ? getEntryPath(entry.date, id) : `unknown_path/${id}`;
+      handleFirestoreError(error, OperationType.DELETE, path);
     }
   };
 

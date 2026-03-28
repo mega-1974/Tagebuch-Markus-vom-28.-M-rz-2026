@@ -99,8 +99,15 @@ service cloud.firestore {
     // Rules
     // ===============================================================
 
+    match /_connection_test/{docId} {
+      allow read: if true;
+    }
+
     match /folder_structure/{docId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     match /users/{userId} {
@@ -131,6 +138,9 @@ service cloud.firestore {
     // Collection Group Rules
     match /{path=**}/entries/{entryId} {
       allow read: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.userId && isValidDiaryEntry(request.resource.data);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.userId && request.auth.uid == request.resource.data.userId && isValidDiaryEntry(request.resource.data) && request.resource.data.id == resource.data.id && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.userId;
     }
 
     match /trash/{itemId} {
