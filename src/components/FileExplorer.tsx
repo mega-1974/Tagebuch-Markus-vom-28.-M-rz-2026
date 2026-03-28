@@ -89,6 +89,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setIsUploading(true);
       await onUpload(file);
       setIsUploading(false);
+      // Reset input to allow uploading the same file again if needed
+      e.target.value = '';
     }
   };
 
@@ -118,11 +120,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               Auswahl zusammenfassen ({selectedIds.size})
             </button>
           )}
-          <label className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
+          <label htmlFor="file-upload" className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all cursor-pointer">
             {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
             Datei hochladen
-            <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
           </label>
+          <input id="file-upload" type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
         </div>
       </div>
 
