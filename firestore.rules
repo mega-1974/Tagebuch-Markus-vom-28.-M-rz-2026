@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Document ID: userId (UID from Firebase Auth)
+    // Fields:
+    //   - id: string (required, immutable) - User's unique ID
+    //   - email: string (required, email format) - User's email address
+    //   - displayName: string (required) - User's display name
+    //   - photoURL: string (optional, uri format) - User's profile photo URL
+    //   - createdAt: timestamp (required, immutable) - When the profile was created
+    //
+    // Collection: /users/{userId}/entries/{entryId}
+    // Document ID: entryId (random string)
+    // Fields:
+    //   - id: string (required, immutable) - Unique identifier for the entry
+    //   - userId: string (required, immutable) - The UID of the user who owns this entry
+    //   - date: string (required, ISO 8601) - The date the entry refers to
+    //   - mood: string (required, enum) - The mood for the day
+    //   - content: string (required, max 5000 chars) - The text content of the diary entry
+    //   - tags: list (optional, max 20 items) - Optional tags for the entry
+    //   - createdAt: string (required, ISO 8601, immutable) - When the entry was created
+    //   - updatedAt: string (required, ISO 8601) - When the entry was last updated
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "megatabsi@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUserProfile(data) {
+      return hasOnlyAllowedFields(['id', 'email', 'displayName', 'photoURL', 'createdAt', 'role']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.email is string && isValidEmail(data.email) &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             (!('photoURL' in data) || isValidUrl(data.photoURL)) &&
+             data.createdAt is string && isValidDateString(data.createdAt);
+    }
+
+    function isValidDiaryEntry(data) {
+      return hasOnlyAllowedFields(['id', 'userId', 'date', 'mood', 'content', 'tags', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.date is string && isValidDateString(data.date) &&
+             data.mood in ['sehr_schlecht', 'schlecht', 'neutral', 'gut', 'sehr_gut'] &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 20)) &&
+             data.createdAt is string && isValidDateString(data.createdAt) &&
+             data.updatedAt is string && isValidDateString(data.updatedAt);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow create: if isOwner(userId) && isValidUserProfile(request.resource.data) && 
+                      (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      
+      allow update: if (isOwner(userId) && isValidUserProfile(request.resource.data) && 
+                      request.resource.data.role == resource.data.role &&
+                      request.resource.data.id == resource.data.id &&
+                      request.resource.data.createdAt == resource.data.createdAt) || isAdmin();
+
+      match /entries/{entryId} {
+        allow read: if isOwner(userId) || isAdmin();
+        
+        allow create: if isOwner(userId) && isValidDiaryEntry(request.resource.data) && 
+                        request.resource.data.userId == userId;
+        
+        allow update: if isOwner(userId) && isValidDiaryEntry(request.resource.data) && 
+                        request.resource.data.id == resource.data.id &&
+                        request.resource.data.userId == resource.data.userId &&
+                        request.resource.data.createdAt == resource.data.createdAt;
+        
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "DiaryEntry": {
+      "title": "DiaryEntry",
+      "description": "A single diary entry documenting mood and thoughts.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the entry." },
+        "userId": { "type": "string", "description": "The UID of the user who owns this entry." },
+        "date": { "type": "string", "format": "date-time", "description": "The date the entry refers to." },
+        "mood": { "type": "string", "enum": ["sehr_schlecht", "schlecht", "neutral", "gut", "sehr_gut"], "description": "The mood for the day." },
+        "content": { "type": "string", "description": "The text content of the diary entry." },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Optional tags for the entry." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the entry was created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the entry was last updated." }
+      },
+      "required": ["id", "userId", "date", "mood", "content", "createdAt", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The user's unique ID." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "format": "uri", "description": "The user's profile photo URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created." }
+      },
+      "required": ["id", "email", "displayName", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile data."
+    },
+    "/users/{userId}/entries/{entryId}": {
+      "schema": "DiaryEntry",
+      "description": "User's private diary entries."
+    }
+  }
+}
