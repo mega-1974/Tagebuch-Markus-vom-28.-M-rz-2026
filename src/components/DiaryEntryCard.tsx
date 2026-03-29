@@ -9,15 +9,18 @@ import { MOOD_EMOJIS, MOOD_LABELS, MOOD_COLORS } from '../constants';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion } from 'motion/react';
-import { Calendar, Tag, Trash2, Edit2 } from 'lucide-react';
+import { Calendar, Tag, Trash2, Edit2, FileDown, Sparkles } from 'lucide-react';
 
 interface DiaryEntryCardProps {
   entry: DiaryEntry;
   onDelete: (id: string) => void;
   onEdit: (entry: DiaryEntry) => void;
+  onExportPDF: (entry: DiaryEntry) => void;
+  onSummarize: (entry: DiaryEntry) => void;
+  onClick: (entry: DiaryEntry) => void;
 }
 
-export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete, onEdit }) => {
+export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete, onEdit, onExportPDF, onSummarize, onClick }) => {
   const date = new Date(entry.date);
   const formattedDate = format(date, 'EEEE, d. MMMM yyyy', { locale: de });
 
@@ -26,7 +29,8 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="parchment rounded-none p-6 shadow-sm border border-[#d3cbb8] hover:shadow-md transition-shadow relative group"
+      onClick={() => onClick(entry)}
+      className="parchment rounded-none p-6 shadow-sm border border-[#d3cbb8] hover:shadow-md transition-shadow relative group cursor-pointer"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
@@ -42,15 +46,31 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
             </div>
           </div>
         </div>
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onSummarize(entry)}
+            title="KI Zusammenfassung"
+            className="p-2 rounded-none hover:bg-black/5 text-primary-light hover:text-primary transition-colors"
+          >
+            <Sparkles size={16} />
+          </button>
+          <button
+            onClick={() => onExportPDF(entry)}
+            title="Als PDF exportieren"
+            className="p-2 rounded-none hover:bg-black/5 text-primary-light hover:text-primary transition-colors"
+          >
+            <FileDown size={16} />
+          </button>
           <button
             onClick={() => onEdit(entry)}
+            title="Bearbeiten"
             className="p-2 rounded-none hover:bg-black/5 text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={() => onDelete(entry.id)}
+            title="Löschen"
             className="p-2 rounded-none hover:bg-red-500/10 text-[#1a1a1a]/60 hover:text-red-600 transition-colors"
           >
             <Trash2 size={16} />
