@@ -25,9 +25,14 @@ export const JournalingPrompts: React.FC = () => {
         contents: "Generiere eine kurze, tiefgründige Journaling-Frage für jemanden, der seine mentale Gesundheit dokumentiert. Auf Deutsch. Nur die Frage.",
       });
       setPrompt(response.text || 'Was hat dich heute zum Lächeln gebracht?');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching prompt:', error);
-      setPrompt('Was war heute dein kleinster Erfolg?');
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded') || errorMessage.includes('rate limit')) {
+        setPrompt('Google macht gerade eine kurze Pause. Bitte warte ca. 60 Sekunden.');
+      } else {
+        setPrompt('Was war heute dein kleinster Erfolg?');
+      }
     } finally {
       setLoading(false);
     }

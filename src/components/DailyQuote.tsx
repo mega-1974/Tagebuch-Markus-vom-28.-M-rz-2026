@@ -25,9 +25,14 @@ export const DailyQuote: React.FC = () => {
         contents: "Generiere ein kurzes, unterstützendes und motivierendes Zitat für jemanden, der mit Depressionen kämpft. Nur das Zitat, kein Text davor oder danach. Auf Deutsch.",
       });
       setQuote(response.text || 'Du bist nicht allein.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching quote:', error);
-      setQuote('Jeder neue Tag ist eine neue Chance.');
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded') || errorMessage.includes('rate limit')) {
+        setQuote('Google macht gerade eine kurze Pause. Bitte warte ca. 60 Sekunden.');
+      } else {
+        setQuote('Jeder neue Tag ist eine neue Chance.');
+      }
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ interface AIModalProps {
   onClose: () => void;
   onSummarize: (prompt: string) => void;
   isProcessing: boolean;
+  isCooldown?: boolean;
   title: string;
   result?: string | null;
   onSave?: (summary: string) => void;
@@ -16,6 +17,7 @@ export const AIModal: React.FC<AIModalProps> = ({
   onClose,
   onSummarize,
   isProcessing,
+  isCooldown,
   title,
   result,
   onSave,
@@ -88,13 +90,18 @@ export const AIModal: React.FC<AIModalProps> = ({
               </button>
               <button
                 onClick={() => onSummarize(prompt)}
-                disabled={isProcessing}
+                disabled={isProcessing || isCooldown}
                 className="px-6 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
                     Verarbeite...
+                  </>
+                ) : isCooldown ? (
+                  <>
+                    <Loader2 size={16} />
+                    Warten...
                   </>
                 ) : (
                   <>

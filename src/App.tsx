@@ -60,6 +60,7 @@ export default function App() {
   const [aiItems, setAiItems] = useState<(DiaryEntry | DiaryDocument)[]>([]);
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [isAICooldown, setIsAICooldown] = useState(false);
   const [selectedExplorerIds, setSelectedExplorerIds] = useState<Set<string>>(new Set());
 
   // Confirm Modal State
@@ -169,6 +170,11 @@ export default function App() {
       return;
     }
     
+    if (isAICooldown) {
+      toast.info('Bitte warte einen Moment, bevor du eine neue Anfrage sendest.');
+      return;
+    }
+
     setIsAIProcessing(true);
     try {
       const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
@@ -213,7 +219,7 @@ export default function App() {
       }
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: 'user', parts }],
       });
 
@@ -225,9 +231,19 @@ export default function App() {
       }
 
       setAiResult(summaryText);
+      
+      // Start cooldown after success
+      setIsAICooldown(true);
+      setTimeout(() => setIsAICooldown(false), 10000); // 10 seconds cooldown
     } catch (error: any) {
       console.error('AI Error:', error);
-      if (error?.message?.includes('503') || error?.message?.includes('overloaded')) {
+      const errorMessage = error?.message || '';
+      
+      if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded') || errorMessage.includes('rate limit')) {
+        toast.error('Google macht gerade eine kurze Pause. Bitte warte ca. 60 Sekunden, bevor du es erneut versuchst.', {
+          duration: 5000
+        });
+      } else if (errorMessage.includes('503') || errorMessage.includes('overloaded')) {
         toast.error('KI gerade überlastet, bitte kurz warten');
       } else {
         toast.error('KI-Verarbeitung fehlgeschlagen');
@@ -581,6 +597,7 @@ export default function App() {
             }}
             onSummarize={handleSummarize}
             isProcessing={isAIProcessing}
+            isCooldown={isAICooldown}
             title={
               aiItems.length > 1 
                 ? `${aiItems.length} Elemente ausgewählt` 
