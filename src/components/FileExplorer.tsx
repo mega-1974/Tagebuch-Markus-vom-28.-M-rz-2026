@@ -291,11 +291,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                       <button onClick={() => toggleSelection(doc.id)} className="text-slate-300 hover:text-emerald-500 transition-colors">
                         {isSelected(doc.id) ? <CheckSquare size={14} className="text-emerald-500" /> : <Square size={14} />}
                       </button>
-                      <div className="flex-1 flex items-center gap-2 text-xs text-slate-600">
+                      <button
+                        onClick={() => onSelectDocument(doc)}
+                        className="flex-1 flex items-center gap-2 text-left text-xs text-slate-600"
+                      >
                         <File size={14} className="text-emerald-400" />
                         <span className="truncate">{doc.name}</span>
                         <span className="text-[9px] text-slate-400">({(doc.size / 1024).toFixed(1)} KB)</span>
-                      </div>
+                      </button>
                       <div className="hidden group-hover:flex items-center gap-1">
                         <button onClick={() => window.open(doc.url, '_blank')} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-emerald-600 transition-all" title="Herunterladen">
                           <Download size={14} />

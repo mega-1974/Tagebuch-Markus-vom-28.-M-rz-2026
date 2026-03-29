@@ -31,10 +31,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { ConfirmModal } from './components/ConfirmModal';
 import { FileExplorer } from './components/FileExplorer';
 import { SummaryList } from './components/SummaryList';
+import { SummaryCard } from './components/SummaryCard';
 import { TrashView } from './components/TrashView';
 import { AIModal } from './components/AIModal';
 import { DiaryEntry, Mood, DiaryDocument, AISummary } from './types';
-import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, Sparkles, FileDown } from 'lucide-react';
+import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, ChevronDown, Sparkles, FileDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { Toaster, toast } from 'sonner';
@@ -53,7 +54,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<'home' | 'stats' | 'files' | 'summaries' | 'settings' | 'trash'>('home');
   const [viewMode, setViewMode] = useState<'list' | 'reading'>('list');
-  const [readingType, setReadingType] = useState<'entry' | 'summary'>('entry');
+  const [readingType, setReadingType] = useState<'entry' | 'summary' | 'document'>('entry');
   const [readingIndex, setReadingIndex] = useState(0);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
@@ -65,6 +66,8 @@ export default function App() {
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [isAICooldown, setIsAICooldown] = useState(false);
   const [selectedExplorerIds, setSelectedExplorerIds] = useState<Set<string>>(new Set());
+  const [isEntriesExpanded, setIsEntriesExpanded] = useState(true);
+  const [isSummariesExpanded, setIsSummariesExpanded] = useState(true);
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -337,7 +340,7 @@ export default function App() {
   };
 
   const handleNextEntry = () => {
-    const list = readingType === 'entry' ? filteredEntries : summaries;
+    const list = readingType === 'entry' ? filteredEntries : readingType === 'summary' ? summaries : documents;
     if (readingIndex < list.length - 1) setReadingIndex(readingIndex + 1);
   };
 
@@ -402,35 +405,99 @@ export default function App() {
                 </div>
 
                 {viewMode === 'list' ? (
-                  <>
-                    {filteredEntries.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-6">
-                        {filteredEntries.map((entry, index) => (
-                          <DiaryEntryCard
-                            key={entry.id}
-                            entry={entry}
-                            onDelete={handleDeleteEntry}
-                            onEdit={handleEditEntry}
-                            onExportPDF={handleExportItemPDF}
-                            onSummarize={(item) => {
-                              setAiItems([item]);
-                              setIsAIModalOpen(true);
-                            }}
-                            onClick={() => {
-                              setReadingIndex(index);
-                              setReadingType('entry');
-                              setViewMode('reading');
-                            }}
-                          />
-                        ))}
+                  <div className="space-y-8">
+                    {/* Entries Section */}
+                    <div>
+                      <button 
+                        onClick={() => setIsEntriesExpanded(!isEntriesExpanded)}
+                        className="flex items-center gap-2 w-full text-left mb-4 group"
+                      >
+                        {isEntriesExpanded ? <ChevronDown size={20} className="text-slate-400 group-hover:text-slate-600" /> : <ChevronRight size={20} className="text-slate-400 group-hover:text-slate-600" />}
+                        <h3 className="font-serif text-2xl font-medium text-slate-800">Tagebucheinträge</h3>
+                        <span className="ml-2 px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">{filteredEntries.length}</span>
+                      </button>
+                      
+                      <AnimatePresence>
+                        {isEntriesExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            {filteredEntries.length > 0 ? (
+                              <div className="grid grid-cols-1 gap-6 pb-4">
+                                {filteredEntries.map((entry, index) => (
+                                  <DiaryEntryCard
+                                    key={entry.id}
+                                    entry={entry}
+                                    onDelete={handleDeleteEntry}
+                                    onEdit={handleEditEntry}
+                                    onExportPDF={handleExportItemPDF}
+                                    onSummarize={(item) => {
+                                      setAiItems([item]);
+                                      setIsAIModalOpen(true);
+                                    }}
+                                    onClick={() => {
+                                      setReadingIndex(index);
+                                      setReadingType('entry');
+                                      setViewMode('reading');
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <EmptyState onNewEntry={() => updateStateAndPush({ isFormOpen: true })} />
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Summaries Section */}
+                    {summaries.length > 0 && (
+                      <div>
+                        <button 
+                          onClick={() => setIsSummariesExpanded(!isSummariesExpanded)}
+                          className="flex items-center gap-2 w-full text-left mb-4 group"
+                        >
+                          {isSummariesExpanded ? <ChevronDown size={20} className="text-slate-400 group-hover:text-slate-600" /> : <ChevronRight size={20} className="text-slate-400 group-hover:text-slate-600" />}
+                          <h3 className="font-serif text-2xl font-medium text-slate-800">KI Zusammenfassungen</h3>
+                          <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full text-xs font-bold">{summaries.length}</span>
+                        </button>
+                        
+                        <AnimatePresence>
+                          {isSummariesExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="grid grid-cols-1 gap-6 pb-4">
+                                {summaries.map((summary, index) => (
+                                  <SummaryCard
+                                    key={summary.id}
+                                    summary={summary}
+                                    onDelete={deleteSummary}
+                                    onExportPDF={handleExportItemPDF}
+                                    onClick={() => {
+                                      setReadingIndex(index);
+                                      setReadingType('summary');
+                                      setViewMode('reading');
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    ) : (
-                      <EmptyState onNewEntry={() => updateStateAndPush({ isFormOpen: true })} />
                     )}
-                  </>
+                  </div>
                 ) : (
                   <div className="relative min-h-[600px] flex flex-col items-center w-full">
-                    {((readingType === 'entry' && filteredEntries.length > 0) || (readingType === 'summary' && summaries.length > 0)) ? (
+                    {((readingType === 'entry' && filteredEntries.length > 0) || (readingType === 'summary' && summaries.length > 0) || (readingType === 'document' && documents.length > 0)) ? (
                       <>
                         <div className="w-full max-w-4xl perspective-1000">
                           <AnimatePresence mode="wait">
@@ -487,7 +554,7 @@ export default function App() {
                                     </div>
                                   </div>
                                 </>
-                              ) : (
+                              ) : readingType === 'summary' ? (
                                 <>
                                   <div className="mb-8 border-b border-stone-300/50 pb-6">
                                     <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
@@ -518,6 +585,46 @@ export default function App() {
                                     </div>
                                   </div>
                                 </>
+                              ) : (
+                                <>
+                                  <div className="mb-8 border-b border-stone-300/50 pb-6">
+                                    <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
+                                      Dokument
+                                    </span>
+                                    <h3 className="font-serif text-3xl text-[#1a1a1a]">
+                                      {documents[readingIndex].name}
+                                    </h3>
+                                  </div>
+                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a] flex flex-col items-center justify-center">
+                                    {documents[readingIndex].type.startsWith('image/') ? (
+                                      <img src={documents[readingIndex].url} alt={documents[readingIndex].name} className="max-w-full max-h-[500px] object-contain" />
+                                    ) : documents[readingIndex].type === 'application/pdf' ? (
+                                      <iframe src={documents[readingIndex].url} className="w-full h-[500px] border-0" title={documents[readingIndex].name} />
+                                    ) : (
+                                      <div className="text-center">
+                                        <p className="mb-4">Vorschau für diesen Dateityp nicht verfügbar.</p>
+                                        <a href={documents[readingIndex].url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                          In neuem Tab öffnen
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
+                                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-50">
+                                      Hochgeladen am {format(new Date(documents[readingIndex].createdAt), 'dd.MM.yyyy')}
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <button 
+                                        onClick={() => handleExportItemPDF(documents[readingIndex])}
+                                        className="p-2 hover:bg-black/5 rounded-full text-slate-400 hover:text-blue-600 transition-all"
+                                        title="Als PDF exportieren"
+                                      >
+                                        <FileDown size={18} />
+                                      </button>
+                                      <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {documents.length}</span>
+                                    </div>
+                                  </div>
+                                </>
                               )}
                             </motion.div>
                           </AnimatePresence>
@@ -533,7 +640,7 @@ export default function App() {
                           </button>
                           <button
                             onClick={handleNextEntry}
-                            disabled={readingIndex === (readingType === 'entry' ? filteredEntries.length : summaries.length) - 1}
+                            disabled={readingIndex === (readingType === 'entry' ? filteredEntries.length : readingType === 'summary' ? summaries.length : documents.length) - 1}
                             className="p-4 rounded-full bg-white shadow-md border border-stone-100 disabled:opacity-30 text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             <ChevronRight size={24} />
@@ -556,13 +663,32 @@ export default function App() {
                   summaries={summaries}
                   selectedIds={selectedExplorerIds}
                   onSelectionChange={setSelectedExplorerIds}
-                  onSelectEntry={(entry) => handleEditEntry(entry)}
-                  onSelectDocument={(doc) => window.open(doc.url, '_blank')}
+                  onSelectEntry={(entry) => {
+                    const index = filteredEntries.findIndex(e => e.id === entry.id);
+                    if (index !== -1) {
+                      setReadingIndex(index);
+                      setReadingType('entry');
+                      setViewMode('reading');
+                      setActiveTab('home');
+                    }
+                  }}
+                  onSelectDocument={(doc) => {
+                    const index = documents.findIndex(d => d.id === doc.id);
+                    if (index !== -1) {
+                      setReadingIndex(index);
+                      setReadingType('document');
+                      setViewMode('reading');
+                      setActiveTab('home');
+                    }
+                  }}
                   onSelectSummary={(summary) => {
                     const index = summaries.findIndex(s => s.id === summary.id);
-                    setReadingIndex(index);
-                    setReadingType('summary');
-                    setViewMode('reading');
+                    if (index !== -1) {
+                      setReadingIndex(index);
+                      setReadingType('summary');
+                      setViewMode('reading');
+                      setActiveTab('home');
+                    }
                   }}
                   onDeleteEntry={handleDeleteEntry}
                   onDeleteDocument={handleDeleteDocument}
@@ -603,9 +729,12 @@ export default function App() {
                   }}
                   onView={(summary) => {
                     const index = summaries.findIndex(s => s.id === summary.id);
-                    setReadingIndex(index);
-                    setReadingType('summary');
-                    setViewMode('reading');
+                    if (index !== -1) {
+                      setReadingIndex(index);
+                      setReadingType('summary');
+                      setViewMode('reading');
+                      setActiveTab('home');
+                    }
                   }}
                 />
               </div>

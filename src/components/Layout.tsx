@@ -62,7 +62,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
 
-        <div className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss relative">
+        <div className="p-4 md:py-8 md:pr-8 md:pl-3 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss relative">
           {children}
         </div>
       </main>
