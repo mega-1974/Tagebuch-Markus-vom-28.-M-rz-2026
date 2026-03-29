@@ -504,7 +504,7 @@ export default function App() {
                   <div className="relative min-h-[600px] flex flex-col items-center w-full">
                     {((readingType === 'entry' && filteredEntries.length > 0) || (readingType === 'summary' && summaries.length > 0) || (readingType === 'document' && documents.length > 0)) ? (
                       <>
-                        <div className="w-full max-w-full perspective-1000">
+                        <div className="w-full max-w-2xl mx-auto perspective-1000">
                           <AnimatePresence mode="wait">
                             <motion.div
                               key={`${readingType}-${readingIndex}`}
