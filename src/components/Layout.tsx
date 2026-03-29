@@ -43,26 +43,26 @@ export const Layout: React.FC<LayoutProps> = ({
         setActiveTab={setActiveTab}
       />
       <main className="flex-1 md:ml-80 w-full relative">
-        <header className="desert-cracks-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 w-full rounded-none sticky top-0 z-20">
+        <header className="desert-cracks-header p-3 md:p-6 flex flex-row justify-between items-center w-full rounded-none sticky top-0 z-30 backdrop-blur-md bg-[#001a4d]/90 border-b border-white/10">
           <div>
-            <p className="text-[8px] uppercase tracking-[0.3em] font-black text-[#636e72] mb-0.5">
+            <p className="text-[7px] md:text-[8px] uppercase tracking-[0.3em] font-black text-[#636e72] mb-0.5">
               Willkommen zurück, {user.displayName.split(' ')[0]}
             </p>
-            <h2 className="gold-script text-2xl md:text-3xl font-medium tracking-tight leading-tight">
+            <h2 className="gold-script text-xl md:text-3xl font-medium tracking-tight leading-tight">
               {tabTitles[activeTab]}
             </h2>
           </div>
-          <div className="text-left md:text-right">
-            <p className="text-[8px] uppercase tracking-[0.2em] font-bold text-[#636e72] mb-0.5">
-              {new Date().toLocaleDateString('de-DE', { weekday: 'long' })}
+          <div className="text-right">
+            <p className="text-[7px] md:text-[8px] uppercase tracking-[0.2em] font-bold text-[#636e72] mb-0.5">
+              {new Date().toLocaleDateString('de-DE', { weekday: 'short' })}
             </p>
-            <p className="font-serif text-base md:text-lg font-medium text-[#dfe6e9]">
-              {new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
+            <p className="font-serif text-sm md:text-lg font-medium text-[#dfe6e9]">
+              {new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
             </p>
           </div>
         </header>
 
-        <div className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss">
+        <div className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss relative">
           {children}
         </div>
       </main>

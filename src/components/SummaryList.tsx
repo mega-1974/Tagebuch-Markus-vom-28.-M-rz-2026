@@ -2,15 +2,16 @@ import React from 'react';
 import { AISummary } from '../types';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Trash2, FileText, Sparkles, Calendar } from 'lucide-react';
+import { Trash2, FileText, Sparkles, Calendar, BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface SummaryListProps {
   summaries: AISummary[];
   onDelete: (id: string) => void;
+  onView: (summary: AISummary) => void;
 }
 
-export const SummaryList: React.FC<SummaryListProps> = ({ summaries, onDelete }) => {
+export const SummaryList: React.FC<SummaryListProps> = ({ summaries, onDelete, onView }) => {
   if (summaries.length === 0) {
     return (
       <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
@@ -47,12 +48,22 @@ export const SummaryList: React.FC<SummaryListProps> = ({ summaries, onDelete })
               </div>
               <h4 className="font-serif text-xl font-bold text-slate-900">{summary.title}</h4>
             </div>
-            <button
-              onClick={() => onDelete(summary.id)}
-              className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"
-            >
-              <Trash2 size={18} />
-            </button>
+            <div className="flex gap-1">
+              <button
+                onClick={() => onView(summary)}
+                className="p-2 hover:bg-blue-50 text-slate-400 hover:text-blue-500 rounded-xl transition-all"
+                title="Im Lesemodus ansehen"
+              >
+                <BookOpen size={18} />
+              </button>
+              <button
+                onClick={() => onDelete(summary.id)}
+                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"
+                title="Löschen"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
           </div>
           
           <div className="p-6 flex-1 overflow-y-auto max-h-60 custom-scrollbar">

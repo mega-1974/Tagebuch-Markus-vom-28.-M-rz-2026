@@ -27,10 +27,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onSignOut, onNewEntry, a
   ];
 
   return (
-    <div className="w-full md:w-80 md:h-screen bg-[#3e362e] border-b md:border-r border-[#5c5248] flex flex-col p-6 md:p-8 md:fixed left-0 top-0 z-40 shadow-xl shadow-black/20">
-      <div className="flex items-center justify-between md:justify-start gap-3 mb-8 md:mb-16">
+    <div className="w-full md:w-80 md:h-screen desert-cracks-header border-b md:border-r border-white/10 flex flex-col p-3 md:p-8 md:fixed left-0 top-0 z-40 shadow-xl shadow-black/20">
+      <div className="flex items-center justify-between md:justify-start gap-3 mb-4 md:mb-16">
         <div className="flex items-center gap-3">
-          <h1 className="font-script text-2xl font-bold tracking-tight gold-script">
+          <h1 className="font-script text-xl md:text-2xl font-bold tracking-tight gold-script">
             Meine Tagesberichte
           </h1>
         </div>
@@ -38,21 +38,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onSignOut, onNewEntry, a
 
       <button
         onClick={onNewEntry}
-        className="w-full flex items-center justify-center gap-3 py-3 md:py-4 text-[#3e362e] bg-[#e8e0d5] rounded-full font-bold transition-all mb-8 md:mb-12 group hover:bg-white"
+        className="w-full flex items-center justify-center gap-3 py-2 md:py-4 text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full font-bold transition-all mb-4 md:mb-12 group text-sm backdrop-blur-sm"
       >
-        <Plus size={20} className="group-hover:rotate-90 transition-transform" />
+        <Plus size={18} className="group-hover:rotate-90 transition-transform" />
         Neuer Eintrag
       </button>
 
-      <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 pb-4 md:pb-0">
+      <nav className="flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 pb-2 md:pb-0 scrollbar-hide">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id as any)}
             className={`flex-shrink-0 flex items-center gap-4 px-4 md:px-6 py-3 md:py-4 rounded-2xl transition-all ${
               activeTab === item.id
-                ? 'bg-[#5c5248] text-[#e8e0d5] shadow-sm border border-[#7a6f64]'
-                : 'text-[#a89f95] hover:text-[#e8e0d5] hover:bg-[#5c5248]/50'
+                ? 'bg-white/15 text-white shadow-sm border border-white/20 backdrop-blur-sm'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
             <item.icon size={20} />
@@ -61,24 +61,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onSignOut, onNewEntry, a
         ))}
       </nav>
 
-      <div className="hidden md:block mt-auto pt-8 border-t border-[#5c5248]">
+      <div className="hidden md:block mt-auto pt-8 border-t border-white/10">
         <div className="flex items-center gap-4 mb-6">
           <img
             src={user.photoURL}
             alt={user.displayName}
             referrerPolicy="no-referrer"
-            className="w-12 h-12 rounded-2xl object-cover border-2 border-[#5c5248] shadow-md"
+            className="w-12 h-12 rounded-2xl object-cover border-2 border-white/20 shadow-md"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#e8e0d5] truncate">{user.displayName}</p>
-            <p className="text-[10px] uppercase tracking-widest font-bold text-[#a89f95] truncate">
+            <p className="text-sm font-bold text-white truncate">{user.displayName}</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 truncate">
               {user.email}
             </p>
           </div>
         </div>
         <button
           onClick={onSignOut}
-          className="w-full flex items-center gap-4 px-6 py-4 text-[#a89f95] hover:text-red-400 hover:bg-[#5c5248] rounded-2xl transition-all"
+          className="w-full flex items-center gap-4 px-6 py-4 text-slate-400 hover:text-red-400 hover:bg-white/5 rounded-2xl transition-all"
         >
           <LogOut size={20} />
           <span className="font-bold">Abmelden</span>

@@ -34,7 +34,9 @@ import { SummaryList } from './components/SummaryList';
 import { TrashView } from './components/TrashView';
 import { AIModal } from './components/AIModal';
 import { DiaryEntry, Mood, DiaryDocument, AISummary } from './types';
-import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, Sparkles, FileDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import ReactMarkdown from 'react-markdown';
 import { Toaster, toast } from 'sonner';
 import { isSameDay, format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -51,6 +53,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<'home' | 'stats' | 'files' | 'summaries' | 'settings' | 'trash'>('home');
   const [viewMode, setViewMode] = useState<'list' | 'reading'>('list');
+  const [readingType, setReadingType] = useState<'entry' | 'summary'>('entry');
   const [readingIndex, setReadingIndex] = useState(0);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
@@ -274,7 +277,7 @@ export default function App() {
     }
   };
 
-  const handleExportItemPDF = (item: DiaryEntry | DiaryDocument) => {
+  const handleExportItemPDF = (item: DiaryEntry | DiaryDocument | AISummary) => {
     try {
       const doc = new jsPDF() as jsPDFWithAutoTable;
       doc.setFontSize(22);
@@ -287,6 +290,14 @@ export default function App() {
         const plainText = item.content.replace(/<[^>]*>/g, ' ');
         const splitText = doc.splitTextToSize(plainText, 180);
         doc.text(splitText, 14, 45);
+      } else if ('sourceType' in item) {
+        doc.text('KI Zusammenfassung', 14, 22);
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text(`Titel: ${item.title}`, 14, 32);
+        doc.text(`Erstellt am: ${format(new Date(item.createdAt), 'dd.MM.yyyy HH:mm')}`, 14, 40);
+        const splitText = doc.splitTextToSize(item.content, 180);
+        doc.text(splitText, 14, 55);
       } else {
         doc.text('Dokument Info', 14, 22);
         doc.setFontSize(12);
@@ -326,7 +337,8 @@ export default function App() {
   };
 
   const handleNextEntry = () => {
-    if (readingIndex < filteredEntries.length - 1) setReadingIndex(readingIndex + 1);
+    const list = readingType === 'entry' ? filteredEntries : summaries;
+    if (readingIndex < list.length - 1) setReadingIndex(readingIndex + 1);
   };
 
   const handlePrevEntry = () => {
@@ -406,6 +418,7 @@ export default function App() {
                             }}
                             onClick={() => {
                               setReadingIndex(index);
+                              setReadingType('entry');
                               setViewMode('reading');
                             }}
                           />
@@ -417,48 +430,111 @@ export default function App() {
                   </>
                 ) : (
                   <div className="relative min-h-[600px] flex flex-col items-center w-full">
-                    {filteredEntries.length > 0 && filteredEntries[readingIndex] ? (
+                    {((readingType === 'entry' && filteredEntries.length > 0) || (readingType === 'summary' && summaries.length > 0)) ? (
                       <>
-                        <div
-                          key={filteredEntries[readingIndex].id}
-                          className="w-full parchment rounded-none p-8 md:p-12 shadow-2xl min-h-[600px] flex flex-col"
-                        >
-                          <div className="mb-8 border-b border-stone-300/50 pb-6">
-                            <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
-                              {format(new Date(filteredEntries[readingIndex].date), 'EEEE', { locale: de })}
-                            </span>
-                            <h3 className="font-serif text-3xl text-[#1a1a1a]">
-                              {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
-                            </h3>
-                          </div>
-                          <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
-                            <div 
-                              className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
-                            />
-                          </div>
-                          <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
-                            <div className="flex gap-2">
-                              {filteredEntries[readingIndex].tags.map(tag => (
-                                <span key={tag} className="text-[10px] uppercase tracking-widest font-bold opacity-50">#{tag}</span>
-                              ))}
-                            </div>
-                            <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {filteredEntries.length}</span>
-                          </div>
+                        <div className="w-full max-w-4xl perspective-1000">
+                          <AnimatePresence mode="wait">
+                            <motion.div
+                              key={`${readingType}-${readingIndex}`}
+                              initial={{ rotateY: 45, opacity: 0, x: 50 }}
+                              animate={{ rotateY: 0, opacity: 1, x: 0 }}
+                              exit={{ rotateY: -45, opacity: 0, x: -50 }}
+                              transition={{ duration: 0.4, ease: "easeInOut" }}
+                              className="w-full parchment rounded-none p-8 md:p-12 shadow-2xl min-h-[600px] flex flex-col relative"
+                              style={{ transformOrigin: readingType === 'entry' ? 'left' : 'center' }}
+                            >
+                              {readingType === 'entry' ? (
+                                <>
+                                  <div className="mb-8 border-b border-stone-300/50 pb-6">
+                                    <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
+                                      {format(new Date(filteredEntries[readingIndex].date), 'EEEE', { locale: de })}
+                                    </span>
+                                    <h3 className="font-serif text-3xl text-[#1a1a1a]">
+                                      {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
+                                    </h3>
+                                  </div>
+                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
+                                    <div 
+                                      className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
+                                      dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
+                                    />
+                                  </div>
+                                  <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
+                                    <div className="flex gap-2">
+                                      {filteredEntries[readingIndex].tags.map(tag => (
+                                        <span key={tag} className="text-[10px] uppercase tracking-widest font-bold opacity-50">#{tag}</span>
+                                      ))}
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <button 
+                                        onClick={() => {
+                                          setAiItems([filteredEntries[readingIndex]]);
+                                          setIsAIModalOpen(true);
+                                        }}
+                                        className="p-2 hover:bg-black/5 rounded-full text-slate-400 hover:text-purple-600 transition-all"
+                                        title="Zusammenfassen"
+                                      >
+                                        <Sparkles size={18} />
+                                      </button>
+                                      <button 
+                                        onClick={() => handleExportItemPDF(filteredEntries[readingIndex])}
+                                        className="p-2 hover:bg-black/5 rounded-full text-slate-400 hover:text-blue-600 transition-all"
+                                        title="Als PDF exportieren"
+                                      >
+                                        <FileDown size={18} />
+                                      </button>
+                                      <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {filteredEntries.length}</span>
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="mb-8 border-b border-stone-300/50 pb-6">
+                                    <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
+                                      KI Zusammenfassung
+                                    </span>
+                                    <h3 className="font-serif text-3xl text-[#1a1a1a]">
+                                      {summaries[readingIndex].title}
+                                    </h3>
+                                  </div>
+                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
+                                    <div className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed">
+                                      <ReactMarkdown>{summaries[readingIndex].content}</ReactMarkdown>
+                                    </div>
+                                  </div>
+                                  <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
+                                    <div className="text-[10px] uppercase tracking-widest font-bold opacity-50">
+                                      Erstellt am {format(new Date(summaries[readingIndex].createdAt), 'dd.MM.yyyy')}
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <button 
+                                        onClick={() => handleExportItemPDF(summaries[readingIndex])}
+                                        className="p-2 hover:bg-black/5 rounded-full text-slate-400 hover:text-blue-600 transition-all"
+                                        title="Als PDF exportieren"
+                                      >
+                                        <FileDown size={18} />
+                                      </button>
+                                      <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {summaries.length}</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </motion.div>
+                          </AnimatePresence>
                         </div>
                         
                         <div className="flex gap-4 mt-8">
                           <button
                             onClick={handlePrevEntry}
                             disabled={readingIndex === 0}
-                            className="p-4 rounded-full bg-white shadow-md border border-stone-100 disabled:opacity-30 text-slate-600"
+                            className="p-4 rounded-full bg-white shadow-md border border-stone-100 disabled:opacity-30 text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             <ChevronLeft size={24} />
                           </button>
                           <button
                             onClick={handleNextEntry}
-                            disabled={readingIndex === filteredEntries.length - 1}
-                            className="p-4 rounded-full bg-white shadow-md border border-stone-100 disabled:opacity-30 text-slate-600"
+                            disabled={readingIndex === (readingType === 'entry' ? filteredEntries.length : summaries.length) - 1}
+                            className="p-4 rounded-full bg-white shadow-md border border-stone-100 disabled:opacity-30 text-slate-600 hover:bg-slate-50 transition-colors"
                           >
                             <ChevronRight size={24} />
                           </button>
@@ -477,12 +553,24 @@ export default function App() {
                 <FileExplorer
                   entries={entries}
                   documents={documents}
+                  summaries={summaries}
                   selectedIds={selectedExplorerIds}
                   onSelectionChange={setSelectedExplorerIds}
                   onSelectEntry={(entry) => handleEditEntry(entry)}
                   onSelectDocument={(doc) => window.open(doc.url, '_blank')}
+                  onSelectSummary={(summary) => {
+                    const index = summaries.findIndex(s => s.id === summary.id);
+                    setReadingIndex(index);
+                    setReadingType('summary');
+                    setViewMode('reading');
+                  }}
                   onDeleteEntry={handleDeleteEntry}
                   onDeleteDocument={handleDeleteDocument}
+                  onDeleteSummary={async (id) => {
+                    try {
+                      await deleteSummary(id);
+                    } catch (e) {}
+                  }}
                   onSummarize={(items) => {
                     setAiItems(items);
                     setIsAIModalOpen(true);
@@ -512,6 +600,12 @@ export default function App() {
                         }
                       }
                     });
+                  }}
+                  onView={(summary) => {
+                    const index = summaries.findIndex(s => s.id === summary.id);
+                    setReadingIndex(index);
+                    setReadingType('summary');
+                    setViewMode('reading');
                   }}
                 />
               </div>

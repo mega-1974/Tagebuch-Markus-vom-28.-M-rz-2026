@@ -28,17 +28,17 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
       onClick={() => onClick(entry)}
       className="parchment rounded-none p-6 shadow-sm border border-[#d3cbb8] hover:shadow-md transition-shadow relative group cursor-pointer"
     >
-      <div className="flex justify-between items-start mb-4">
+      <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-none bg-black/5 flex items-center justify-center text-[#1a1a1a]/60">
             <Calendar size={20} />
           </div>
           <div>
             <h3 className="font-serif text-lg font-medium text-[#1a1a1a]">
-              {formattedDate}
+              Eintrag vom {formattedDate}
             </h3>
             <div className="flex items-center gap-1 text-xs text-[#1a1a1a]/60">
-              <span>Eintrag vom {format(date, 'HH:mm')} Uhr</span>
+              <span>{format(date, 'HH:mm')} Uhr</span>
             </div>
           </div>
         </div>
@@ -74,13 +74,8 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
         </div>
       </div>
 
-      <div 
-        className="prose prose-sm max-w-none text-[#1a1a1a] mb-4 line-clamp-3"
-        dangerouslySetInnerHTML={{ __html: entry.content }}
-      />
-
       {entry.tags && entry.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-4">
           {entry.tags.map((tag) => (
             <div
               key={tag}

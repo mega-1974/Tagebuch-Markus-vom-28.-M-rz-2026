@@ -12,9 +12,10 @@ import {
   CheckSquare, 
   Square,
   Upload,
-  Loader2
+  Loader2,
+  FileDown
 } from 'lucide-react';
-import { DiaryEntry, DiaryDocument } from '../types';
+import { DiaryEntry, DiaryDocument, AISummary } from '../types';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
@@ -22,31 +23,37 @@ import { motion, AnimatePresence } from 'motion/react';
 interface FileExplorerProps {
   entries: DiaryEntry[];
   documents: DiaryDocument[];
+  summaries: AISummary[];
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
   onSelectEntry: (entry: DiaryEntry) => void;
   onSelectDocument: (doc: DiaryDocument) => void;
+  onSelectSummary: (summary: AISummary) => void;
   onDeleteEntry: (id: string) => void;
   onDeleteDocument: (doc: DiaryDocument) => void;
+  onDeleteSummary: (id: string) => void;
   onSummarize: (items: (DiaryEntry | DiaryDocument)[]) => void;
-  onExportPDF: (item: DiaryEntry | DiaryDocument) => void;
+  onExportPDF: (item: DiaryEntry | DiaryDocument | AISummary) => void;
   onUpload: (file: File) => void;
 }
 
 export const FileExplorer: React.FC<FileExplorerProps> = ({
   entries,
   documents,
+  summaries,
   selectedIds,
   onSelectionChange,
   onSelectEntry,
   onSelectDocument,
+  onSelectSummary,
   onDeleteEntry,
   onDeleteDocument,
+  onDeleteSummary,
   onSummarize,
   onExportPDF,
   onUpload,
 }) => {
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['diary', 'documents']));
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['diary', 'documents', 'summaries']));
 
   const toggleFolder = (id: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -167,7 +174,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                                       className="flex-1 flex items-center gap-2 text-left text-xs text-slate-600"
                                     >
                                       <FileText size={14} className="text-blue-400" />
-                                      <span className="truncate">{format(new Date(entry.date), 'dd.MM.yyyy')} - {entry.content.substring(0, 30)}...</span>
+                                      <span className="truncate">{format(new Date(entry.date), 'dd.MM.yyyy')} - {entry.content.replace(/<[^>]*>/g, ' ').substring(0, 30)}...</span>
                                     </button>
                                     <div className="hidden group-hover:flex items-center gap-1">
                                       <button onClick={() => onExportPDF(entry)} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-blue-600 transition-all" title="Als PDF exportieren">
@@ -187,6 +194,56 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     )}
                   </div>
                 ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Summaries Folder */}
+        <div className="mb-4">
+          <button
+            onClick={() => toggleFolder('summaries')}
+            className="flex items-center gap-2 w-full p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-700 font-bold text-sm"
+          >
+            {expandedFolders.has('summaries') ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            <Folder size={18} className="text-purple-500 fill-purple-50" />
+            Zusammenfassungen
+          </button>
+          
+          <AnimatePresence>
+            {expandedFolders.has('summaries') && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="ml-6 overflow-hidden mt-2 space-y-1"
+              >
+                {summaries.length === 0 ? (
+                  <p className="text-[10px] text-slate-400 italic p-2">Keine Zusammenfassungen vorhanden.</p>
+                ) : (
+                  summaries.map(summary => (
+                    <div key={summary.id} className="group flex items-center gap-2 p-2 hover:bg-purple-50 rounded-xl transition-all">
+                      <button onClick={() => toggleSelection(summary.id)} className="text-slate-300 hover:text-purple-500 transition-colors">
+                        {isSelected(summary.id) ? <CheckSquare size={14} className="text-purple-500" /> : <Square size={14} />}
+                      </button>
+                      <button
+                        onClick={() => onSelectSummary(summary)}
+                        className="flex-1 flex items-center gap-2 text-left text-xs text-slate-600"
+                      >
+                        <Sparkles size={14} className="text-purple-400" />
+                        <span className="truncate">{summary.title}</span>
+                      </button>
+                      <div className="hidden group-hover:flex items-center gap-1">
+                        <button onClick={() => onExportPDF(summary)} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-purple-600 transition-all" title="Als PDF exportieren">
+                          <Download size={14} />
+                        </button>
+                        <button onClick={() => onDeleteSummary(summary.id)} className="p-1 hover:bg-white rounded-lg text-slate-400 hover:text-red-600 transition-all" title="Löschen">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </motion.div>
             )}
           </AnimatePresence>
