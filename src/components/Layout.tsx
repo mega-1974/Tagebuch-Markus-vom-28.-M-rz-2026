@@ -42,8 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <main className="flex-1 md:ml-80 w-full relative">
-        <header className="desert-cracks-header p-3 md:p-6 flex flex-row justify-between items-center w-full rounded-none sticky top-0 z-30 backdrop-blur-md bg-[#001a4d]/90 border-b border-white/10">
+      <div className="flex-1 flex flex-col md:ml-80 w-full relative">
+        <header className="desert-cracks-header p-3 md:p-6 flex flex-row justify-between items-center w-full md:w-[calc(100%-320px)] rounded-none fixed top-0 z-30 backdrop-blur-md bg-[#001a4d]/90 border-b border-white/10 h-20 md:h-24">
           <div>
             <p className="text-[7px] md:text-[8px] uppercase tracking-[0.3em] font-black text-[#636e72] mb-0.5">
               Willkommen zurück, {user.displayName.split(' ')[0]}
@@ -62,10 +62,10 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
 
-        <div className="p-4 md:py-8 md:pr-8 md:pl-3 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss relative">
+        <div className="p-4 md:py-8 md:pr-8 md:pl-8 w-full min-h-screen pt-24 md:pt-28 bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss relative">
           {children}
         </div>
-      </main>
+      </div>
     </div>
   );
 };

@@ -523,6 +523,7 @@ export default function App() {
                                   <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
                                     <div 
                                       className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
+                                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '13pt' }}
                                       dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
                                     />
                                   </div>
@@ -565,7 +566,7 @@ export default function App() {
                                     </h3>
                                   </div>
                                   <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
-                                    <div className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed">
+                                    <div className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed" style={{ fontFamily: 'Arial, sans-serif', fontSize: '13pt' }}>
                                       <ReactMarkdown>{summaries[readingIndex].content}</ReactMarkdown>
                                     </div>
                                   </div>
