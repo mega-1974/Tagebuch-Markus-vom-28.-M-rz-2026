@@ -35,7 +35,7 @@ import { SummaryCard } from './components/SummaryCard';
 import { TrashView } from './components/TrashView';
 import { AIModal } from './components/AIModal';
 import { DiaryEntry, Mood, DiaryDocument, AISummary } from './types';
-import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, ChevronDown, Sparkles, FileDown } from 'lucide-react';
+import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, ChevronDown, Sparkles, FileDown, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { Toaster, toast } from 'sonner';
@@ -111,7 +111,7 @@ export default function App() {
   };
 
   const filteredEntries = useMemo(() => {
-    return [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...entries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [entries]);
 
   const handleSaveEntry = async (entryData: Partial<DiaryEntry>) => {
@@ -339,6 +339,11 @@ export default function App() {
     }
   };
 
+  const formatContentToParagraphs = (content: string) => {
+    if (content.includes('<p>')) return content;
+    return content.split('\n\n').map(paragraph => `<p>${paragraph.replace(/\n/g, '<br/>')}</p>`).join('');
+  };
+
   const handleNextEntry = () => {
     const list = readingType === 'entry' ? filteredEntries : readingType === 'summary' ? summaries : documents;
     if (readingIndex < list.length - 1) setReadingIndex(readingIndex + 1);
@@ -499,7 +504,7 @@ export default function App() {
                   <div className="relative min-h-[600px] flex flex-col items-center w-full">
                     {((readingType === 'entry' && filteredEntries.length > 0) || (readingType === 'summary' && summaries.length > 0) || (readingType === 'document' && documents.length > 0)) ? (
                       <>
-                        <div className="w-full max-w-4xl perspective-1000">
+                        <div className="w-full max-w-full perspective-1000">
                           <AnimatePresence mode="wait">
                             <motion.div
                               key={`${readingType}-${readingIndex}`}
@@ -520,11 +525,11 @@ export default function App() {
                                       {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
                                     </h3>
                                   </div>
-                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
+                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a] w-full overflow-hidden">
                                     <div 
-                                      className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
-                                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '13pt' }}
-                                      dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
+                                      className="prose prose-lg max-w-full text-[#1a1a1a] leading-relaxed break-words"
+                                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none' }}
+                                      dangerouslySetInnerHTML={{ __html: formatContentToParagraphs(filteredEntries[readingIndex].content) }}
                                     />
                                   </div>
                                   <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
@@ -534,6 +539,16 @@ export default function App() {
                                       ))}
                                     </div>
                                     <div className="flex items-center gap-4">
+                                      <button 
+                                        onClick={() => {
+                                          setEditingEntry(filteredEntries[readingIndex]);
+                                          setIsFormOpen(true);
+                                        }}
+                                        className="p-2 hover:bg-black/5 rounded-full text-slate-400 hover:text-emerald-600 transition-all"
+                                        title="Bearbeiten"
+                                      >
+                                        <Edit size={18} />
+                                      </button>
                                       <button 
                                         onClick={() => {
                                           setAiItems([filteredEntries[readingIndex]]);
@@ -565,8 +580,8 @@ export default function App() {
                                       {summaries[readingIndex].title}
                                     </h3>
                                   </div>
-                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
-                                    <div className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed" style={{ fontFamily: 'Arial, sans-serif', fontSize: '13pt' }}>
+                                  <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a] w-full overflow-hidden">
+                                    <div className="prose prose-lg max-w-full text-[#1a1a1a] leading-relaxed break-words" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none' }}>
                                       <ReactMarkdown>{summaries[readingIndex].content}</ReactMarkdown>
                                     </div>
                                   </div>
