@@ -15,7 +15,11 @@ export const DailyQuote: React.FC = () => {
   const fetchQuote = async () => {
     setLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+      if (!apiKey) {
+        throw new Error('API Key missing');
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: "Generiere ein kurzes, unterstützendes und motivierendes Zitat für jemanden, der mit Depressionen kämpft. Nur das Zitat, kein Text davor oder danach. Auf Deutsch.",

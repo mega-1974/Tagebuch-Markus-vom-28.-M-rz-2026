@@ -15,7 +15,11 @@ export const JournalingPrompts: React.FC = () => {
   const fetchPrompt = async () => {
     setLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
+      if (!apiKey) {
+        throw new Error('API Key missing');
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: "Generiere eine kurze, tiefgründige Journaling-Frage für jemanden, der seine mentale Gesundheit dokumentiert. Auf Deutsch. Nur die Frage.",
