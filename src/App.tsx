@@ -462,7 +462,7 @@ export default function App() {
                     <>
                       {filteredEntries.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6">
-                          <AnimatePresence mode="popLayout">
+                          <AnimatePresence>
                             {filteredEntries.map((entry, index) => (
                               <DiaryEntryCard
                                 key={entry.id}
@@ -488,7 +488,7 @@ export default function App() {
                     </>
                   ) : (
                     <div className="relative min-h-[600px] flex flex-col items-center w-full">
-                      {filteredEntries.length > 0 ? (
+                      {filteredEntries.length > 0 && filteredEntries[readingIndex] ? (
                         <>
                           <AnimatePresence mode="wait">
                             <motion.div
