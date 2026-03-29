@@ -43,28 +43,28 @@ export const Layout: React.FC<LayoutProps> = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <main className="flex-1 md:ml-80 w-full">
-        <header className="desert-cracks-header p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0 w-full rounded-none">
+      <main className="flex-1 md:ml-80 w-full relative">
+        <header className="desert-cracks-header p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0 w-full rounded-none sticky top-0 z-20">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-[#636e72] mb-1">
+            <p className="text-[8px] uppercase tracking-[0.3em] font-black text-[#636e72] mb-0.5">
               Willkommen zurück, {user.displayName.split(' ')[0]}
             </p>
-            <h2 className="font-serif text-3xl md:text-4xl font-medium text-[#dfe6e9] tracking-tight leading-tight">
+            <h2 className="gold-script text-2xl md:text-3xl font-medium tracking-tight leading-tight">
               {tabTitles[activeTab]}
             </h2>
           </div>
           <div className="text-left md:text-right">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#636e72] mb-1">
+            <p className="text-[8px] uppercase tracking-[0.2em] font-bold text-[#636e72] mb-0.5">
               {new Date().toLocaleDateString('de-DE', { weekday: 'long' })}
             </p>
-            <p className="font-serif text-lg md:text-xl font-medium text-[#dfe6e9]">
+            <p className="font-serif text-base md:text-lg font-medium text-[#dfe6e9]">
               {new Date().toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
             </p>
           </div>
         </header>
 
         <motion.div 
-          className="p-6 md:p-16 max-w-7xl mx-auto w-full min-h-[calc(100vh-200px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss"
+          className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}

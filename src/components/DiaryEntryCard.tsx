@@ -26,18 +26,18 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-[#2d3436] rounded-none p-6 shadow-sm border border-[#3e362e] hover:shadow-md transition-shadow relative group"
+      className="parchment rounded-none p-6 shadow-sm border border-[#d3cbb8] hover:shadow-md transition-shadow relative group"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-none bg-[#1e272e] flex items-center justify-center text-[#636e72]">
+          <div className="w-10 h-10 rounded-none bg-black/5 flex items-center justify-center text-[#1a1a1a]/60">
             <Calendar size={20} />
           </div>
           <div>
-            <h3 className="font-serif text-lg font-medium text-[#dfe6e9]">
+            <h3 className="font-serif text-lg font-medium text-[#1a1a1a]">
               {formattedDate}
             </h3>
-            <div className="flex items-center gap-1 text-xs text-[#636e72]">
+            <div className="flex items-center gap-1 text-xs text-[#1a1a1a]/60">
               <span>Eintrag vom {format(date, 'HH:mm')} Uhr</span>
             </div>
           </div>
@@ -45,22 +45,23 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(entry)}
-            className="p-2 rounded-none hover:bg-[#1e272e] text-[#636e72] hover:text-[#b2bec3] transition-colors"
+            className="p-2 rounded-none hover:bg-black/5 text-[#1a1a1a]/60 hover:text-[#1a1a1a] transition-colors"
           >
             <Edit2 size={16} />
           </button>
           <button
             onClick={() => onDelete(entry.id)}
-            className="p-2 rounded-none hover:bg-red-900/20 text-[#636e72] hover:text-red-400 transition-colors"
+            className="p-2 rounded-none hover:bg-red-500/10 text-[#1a1a1a]/60 hover:text-red-600 transition-colors"
           >
             <Trash2 size={16} />
           </button>
         </div>
       </div>
 
-      <div className="prose prose-invert prose-sm max-w-none text-[#b2bec3] mb-4 line-clamp-3">
-        {entry.content}
-      </div>
+      <div 
+        className="prose prose-sm max-w-none text-[#1a1a1a] mb-4 line-clamp-3"
+        dangerouslySetInnerHTML={{ __html: entry.content }}
+      />
 
       {entry.tags && entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">

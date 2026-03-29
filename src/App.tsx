@@ -27,7 +27,6 @@ import { EmptyState } from './components/EmptyState';
 import { Auth } from './components/Auth';
 import { Stats } from './components/Stats';
 import { Settings } from './components/Settings';
-import { SearchAndFilter } from './components/SearchAndFilter';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ConfirmModal } from './components/ConfirmModal';
 import { FileExplorer } from './components/FileExplorer';
@@ -102,27 +101,10 @@ export default function App() {
     type: 'info',
   });
 
-  // Search and Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const availableTags = useMemo(() => {
-    const tags = new Set<string>();
-    entries.forEach((e) => e.tags?.forEach((t) => tags.add(t)));
-    return Array.from(tags).sort();
-  }, [entries]);
-
+  // Search and Filter State - REMOVED
   const filteredEntries = useMemo(() => {
-    return entries.filter((entry) => {
-      const matchesSearch =
-        entry.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        entry.tags?.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesTags =
-        selectedTags.length > 0 ? selectedTags.every((t) => entry.tags?.includes(t)) : true;
-
-      return matchesSearch && matchesTags;
-    });
-  }, [entries, searchQuery, selectedTags]);
+    return [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [entries]);
 
   const handleSaveEntry = async (entryData: Partial<DiaryEntry>) => {
     try {
@@ -185,7 +167,15 @@ export default function App() {
     
     setIsAIProcessing(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const apiKey = process.env.GEMINI_API_KEY || ((import.meta as any).env.VITE_GEMINI_API_KEY as string);
+      
+      if (!apiKey) {
+        toast.error('KI-API-Schlüssel fehlt. Bitte in den Vercel-Umgebungsvariablen (VITE_GEMINI_API_KEY) konfigurieren.');
+        setIsAIProcessing(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const parts: any[] = [
         { text: `Du bist ein hilfreicher Assistent für ein persönliches Tagebuch. 
@@ -195,41 +185,51 @@ export default function App() {
 
       for (const item of aiItems) {
         if ('date' in item) {
-          parts.push({ text: `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${item.content}\n\n` });
+          // Strip HTML tags for the prompt
+          const textContent = item.content.replace(/<[^>]*>/g, ' ');
+          parts.push({ text: `Eintrag (${format(new Date(item.date), 'dd.MM.yyyy')}): ${textContent}\n\n` });
         } else {
           try {
-            const response = await fetch(item.url);
+            // Use a more robust fetch with timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const response = await fetch(item.url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
             const blob = await response.blob();
-            const base64 = await new Promise<string>((resolve) => {
+            const base64 = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
               reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+              reader.onerror = reject;
               reader.readAsDataURL(blob);
             });
             
             parts.push({ text: `Dokument (${item.name}):\n` });
             parts.push({
               inlineData: {
-                mimeType: item.type || (item.name.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'),
+                mimeType: item.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
                 data: base64,
               }
             });
             parts.push({ text: `\n\n` });
           } catch (err) {
             console.error('Failed to fetch document for summary:', err);
-            parts.push({ text: `Dokument (${item.name}): [Inhalt konnte nicht geladen werden]\n\n` });
+            parts.push({ text: `Dokument (${item.name}): [Inhalt konnte nicht geladen werden - CORS oder Netzwerkfehler]\n\n` });
           }
         }
       }
 
-      const model = ai.models.generateContent({
-        model: "gemini-3.1-pro-preview", // Use pro for complex multimodal tasks
+      const result = await ai.models.generateContent({
+        model: "gemini-3.1-pro-preview",
         contents: { parts },
       });
 
-      const response = await model;
       let summaryText = 'Keine Zusammenfassung generiert.';
       try {
-        summaryText = response.text || summaryText;
+        summaryText = result.text || summaryText;
       } catch (e) {
         console.warn('Could not extract text from response, possibly blocked by safety settings.', e);
         summaryText = 'Die Zusammenfassung konnte aufgrund von Sicherheitsrichtlinien nicht generiert werden.';
@@ -425,7 +425,7 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={(tab) => updateStateAndPush({ activeTab: tab })}
         >
-          <div className="max-w-4xl">
+          <div className="w-full">
             {activeTab === 'home' && (
               <div className="space-y-8">
                 <div className="flex justify-between items-center mb-6">
@@ -451,14 +451,6 @@ export default function App() {
 
                 {viewMode === 'list' ? (
                   <>
-                    <SearchAndFilter
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                      availableTags={availableTags}
-                      selectedTags={selectedTags}
-                      setSelectedTags={setSelectedTags}
-                    />
-
                     {filteredEntries.length > 0 ? (
                       <div className="grid grid-cols-1 gap-6">
                         <AnimatePresence mode="popLayout">
@@ -477,7 +469,7 @@ export default function App() {
                     )}
                   </>
                 ) : (
-                  <div className="relative min-h-[600px] flex flex-col items-center">
+                  <div className="relative min-h-[600px] flex flex-col items-center w-full">
                     {filteredEntries.length > 0 ? (
                       <>
                         <AnimatePresence mode="wait">
@@ -489,18 +481,21 @@ export default function App() {
                             drag="x"
                             dragConstraints={{ left: 0, right: 0 }}
                             onDragEnd={swipeHandlers.onDragEnd}
-                            className="w-full parchment-bg rounded-[40px] p-12 shadow-2xl min-h-[500px] flex flex-col cursor-grab active:cursor-grabbing"
+                            className="w-full parchment rounded-none p-8 md:p-12 shadow-2xl min-h-[600px] flex flex-col cursor-grab active:cursor-grabbing"
                           >
                             <div className="mb-8 border-b border-stone-300/50 pb-6">
                               <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
                                 {format(new Date(filteredEntries[readingIndex].date), 'EEEE', { locale: de })}
                               </span>
-                              <h3 className="font-serif text-3xl text-stone-800">
+                              <h3 className="font-serif text-3xl text-[#1a1a1a]">
                                 {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
                               </h3>
                             </div>
-                            <div className="flex-1 font-serif text-xl leading-relaxed text-stone-700 whitespace-pre-wrap">
-                              {filteredEntries[readingIndex].content}
+                            <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
+                              <div 
+                                className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
+                              />
                             </div>
                             <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
                               <div className="flex gap-2">

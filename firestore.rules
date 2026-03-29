@@ -56,7 +56,7 @@ service cloud.firestore {
              data.userId is string && data.userId.size() > 0 &&
              data.date is string && isValidDateString(data.date) &&
              data.mood is number && // Mood is enum in TS, but number in Firestore
-             data.content is string && data.content.size() > 0 && data.content.size() < 20000 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
              (!('tags' in data) || (data.tags is list && data.tags.size() <= 50)) &&
              (!('createdAt' in data) || (data.createdAt is string && isValidDateString(data.createdAt))) &&
              (!('updatedAt' in data) || (data.updatedAt is string && isValidDateString(data.updatedAt)));
@@ -67,7 +67,7 @@ service cloud.firestore {
              data.id is string && data.id.size() > 0 &&
              data.userId is string && data.userId.size() > 0 &&
              data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 20000 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 30000 &&
              data.sourceIds is list && data.sourceIds.size() <= 100 &&
              data.sourceType in ['entry', 'document', 'mixed'] &&
              data.createdAt is string && isValidDateString(data.createdAt);

@@ -8,6 +8,28 @@ import { DiaryEntry, Mood } from '../types';
 import { motion } from 'motion/react';
 import { X, Save, Tag as TagIcon, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import ReactQuill, { Quill } from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+
+// Register custom sizes and fonts
+const Size = Quill.import('attributors/style/size') as any;
+Size.whitelist = ['7pt', '8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '20pt', '24pt', '30pt'];
+Quill.register(Size, true);
+
+const Font = Quill.import('attributors/style/font') as any;
+Font.whitelist = ['sans-serif', 'serif', 'monospace', 'dancing-script'];
+Quill.register(Font, true);
+
+const modules = {
+  toolbar: [
+    [{ 'font': ['sans-serif', 'serif', 'monospace', 'dancing-script'] }],
+    [{ 'size': ['7pt', '8pt', '9pt', '10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '20pt', '24pt', '30pt'] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+    ['clean']
+  ],
+};
 
 interface DiaryEntryFormProps {
   entry?: DiaryEntry | null;
@@ -44,7 +66,7 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
   };
 
   const handleSave = () => {
-    if (!content.trim()) return;
+    if (!content.trim() || content === '<p><br></p>') return;
     onSave({
       mood: Mood.NEUTRAL,
       content,
@@ -60,7 +82,7 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
       exit={{ opacity: 0, scale: 0.95 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm"
     >
-      <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl overflow-hidden border border-stone-200 max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-[40px] w-full max-w-3xl shadow-2xl overflow-hidden border border-stone-200 max-h-[90vh] flex flex-col">
         <div className="p-8 overflow-y-auto flex-1">
           <div className="flex justify-between items-center mb-8">
             <h2 className="font-serif text-2xl font-medium text-stone-800">
@@ -90,16 +112,19 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
               </div>
             </section>
 
-            <section>
+            <section className="quill-container">
               <label className="block text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-3">
                 Deine Gedanken
               </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Schreibe hier, was dich heute beschäftigt..."
-                className="w-full h-64 p-6 bg-stone-50 rounded-3xl border border-stone-100 focus:border-stone-300 focus:ring-0 transition-all resize-none text-stone-700 placeholder:text-stone-300"
-              />
+              <div className="rounded-3xl overflow-hidden border border-stone-100">
+                <ReactQuill
+                  theme="snow"
+                  value={content}
+                  onChange={setContent}
+                  modules={modules}
+                  placeholder="Schreibe hier, was dich heute beschäftigt..."
+                />
+              </div>
             </section>
 
             <section>
@@ -143,7 +168,7 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
           </button>
           <button
             onClick={handleSave}
-            disabled={!content.trim()}
+            disabled={!content.trim() || content === '<p><br></p>'}
             className="flex items-center gap-2 px-8 py-3 bg-stone-800 text-white rounded-full font-medium hover:bg-stone-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-stone-200"
           >
             <Save size={18} />
@@ -154,3 +179,4 @@ export const DiaryEntryForm: React.FC<DiaryEntryFormProps> = ({ entry, onSave, o
     </motion.div>
   );
 };
+

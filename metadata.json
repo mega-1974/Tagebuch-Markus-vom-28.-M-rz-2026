@@ -1,5 +1,5 @@
 {
-  "name": "Tagebuch Markus vom 28. März 2026",
-  "description": "A supportive diary app to document and track your mental health journey, with local and cloud backup.",
+  "name": "Mein Achtsamer Pfad",
+  "description": "Ein sicheres, KI-gestütztes Tagebuch für deine Gedanken mit PWA-Support und Cloud-Synchronisierung.",
   "requestFramePermissions": []
 }
