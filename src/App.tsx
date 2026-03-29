@@ -34,7 +34,6 @@ import { SummaryList } from './components/SummaryList';
 import { TrashView } from './components/TrashView';
 import { AIModal } from './components/AIModal';
 import { DiaryEntry, Mood, DiaryDocument, AISummary } from './types';
-import { AnimatePresence, motion } from 'motion/react';
 import { Plus, CloudOff, BookOpen, List as ListIcon, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { isSameDay, format } from 'date-fns';
@@ -60,6 +59,7 @@ export default function App() {
     // AI State
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
     const [aiItems, setAiItems] = useState<(DiaryEntry | DiaryDocument)[]>([]);
+    const [aiResult, setAiResult] = useState<string | null>(null);
     const [isAIProcessing, setIsAIProcessing] = useState(false);
     const [selectedExplorerIds, setSelectedExplorerIds] = useState<Set<string>>(new Set());
 
@@ -244,37 +244,34 @@ export default function App() {
           summaryText = 'Die Zusammenfassung konnte aufgrund von Sicherheitsrichtlinien nicht generiert werden.';
         }
 
-        setConfirmModal({
-          isOpen: true,
-          title: 'Zusammenfassung speichern?',
-          message: 'Möchtest du diese KI-Zusammenfassung in deinem Archiv speichern?',
-          type: 'info',
-          onConfirm: async () => {
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-            setIsAIModalOpen(false);
-            setAiItems([]);
-            setSelectedExplorerIds(new Set());
-            await saveSummary({
-              userId: user.id,
-              title: `Zusammenfassung vom ${format(new Date(), 'dd.MM.yyyy HH:mm')}`,
-              content: summaryText,
-              sourceIds: aiItems.map(i => i.id),
-              sourceType: aiItems.every(i => 'content' in i) ? 'entry' : aiItems.every(i => 'url' in i) ? 'document' : 'mixed',
-              createdAt: new Date().toISOString(),
-            });
-          },
-          onCancel: () => {
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
-            setIsAIModalOpen(false);
-            setAiItems([]);
-            setSelectedExplorerIds(new Set());
-          }
-        });
+        setAiResult(summaryText);
       } catch (error) {
         console.error('AI Error:', error);
         toast.error('KI-Verarbeitung fehlgeschlagen');
       } finally {
         setIsAIProcessing(false);
+      }
+    };
+
+    const handleSaveAISummary = async (summaryText: string) => {
+      if (!user) return;
+      try {
+        await saveSummary({
+          userId: user.id,
+          title: `Zusammenfassung vom ${format(new Date(), 'dd.MM.yyyy HH:mm')}`,
+          content: summaryText,
+          sourceIds: aiItems.map(i => i.id),
+          sourceType: aiItems.every(i => 'content' in i) ? 'entry' : aiItems.every(i => 'url' in i) ? 'document' : 'mixed',
+          createdAt: new Date().toISOString(),
+        });
+        setIsAIModalOpen(false);
+        setAiResult(null);
+        setAiItems([]);
+        setSelectedExplorerIds(new Set());
+        toast.success('Zusammenfassung gespeichert');
+      } catch (error) {
+        console.error('Save Summary Error:', error);
+        toast.error('Fehler beim Speichern');
       }
     };
 
@@ -418,11 +415,7 @@ export default function App() {
         <Toaster position="top-center" richColors />
         {authLoading ? (
           <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8]">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="w-16 h-16 bg-primary rounded-2xl shadow-xl metallic-gloss"
-            />
+            <div className="w-16 h-16 bg-primary rounded-2xl shadow-xl metallic-gloss animate-pulse" />
           </div>
         ) : !user ? (
           <Auth onSignIn={signIn} />
@@ -462,25 +455,23 @@ export default function App() {
                     <>
                       {filteredEntries.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6">
-                          <AnimatePresence>
-                            {filteredEntries.map((entry, index) => (
-                              <DiaryEntryCard
-                                key={entry.id}
-                                entry={entry}
-                                onDelete={handleDeleteEntry}
-                                onEdit={handleEditEntry}
-                                onExportPDF={handleExportItemPDF}
-                                onSummarize={(item) => {
-                                  setAiItems([item]);
-                                  setIsAIModalOpen(true);
-                                }}
-                                onClick={() => {
-                                  setReadingIndex(index);
-                                  setViewMode('reading');
-                                }}
-                              />
-                            ))}
-                          </AnimatePresence>
+                          {filteredEntries.map((entry, index) => (
+                            <DiaryEntryCard
+                              key={entry.id}
+                              entry={entry}
+                              onDelete={handleDeleteEntry}
+                              onEdit={handleEditEntry}
+                              onExportPDF={handleExportItemPDF}
+                              onSummarize={(item) => {
+                                setAiItems([item]);
+                                setIsAIModalOpen(true);
+                              }}
+                              onClick={() => {
+                                setReadingIndex(index);
+                                setViewMode('reading');
+                              }}
+                            />
+                          ))}
                         </div>
                       ) : (
                         <EmptyState onNewEntry={() => updateStateAndPush({ isFormOpen: true })} />
@@ -490,41 +481,33 @@ export default function App() {
                     <div className="relative min-h-[600px] flex flex-col items-center w-full">
                       {filteredEntries.length > 0 && filteredEntries[readingIndex] ? (
                         <>
-                          <AnimatePresence mode="wait">
-                            <motion.div
-                              key={filteredEntries[readingIndex].id}
-                              initial={{ x: 300, opacity: 0 }}
-                              animate={{ x: 0, opacity: 1 }}
-                              exit={{ x: -300, opacity: 0 }}
-                              drag="x"
-                              dragConstraints={{ left: 0, right: 0 }}
-                              onDragEnd={swipeHandlers.onDragEnd}
-                              className="w-full parchment rounded-none p-8 md:p-12 shadow-2xl min-h-[600px] flex flex-col cursor-grab active:cursor-grabbing"
-                            >
-                              <div className="mb-8 border-b border-stone-300/50 pb-6">
-                                <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
-                                  {format(new Date(filteredEntries[readingIndex].date), 'EEEE', { locale: de })}
-                                </span>
-                                <h3 className="font-serif text-3xl text-[#1a1a1a]">
-                                  {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
-                                </h3>
+                          <div
+                            key={filteredEntries[readingIndex].id}
+                            className="w-full parchment rounded-none p-8 md:p-12 shadow-2xl min-h-[600px] flex flex-col"
+                          >
+                            <div className="mb-8 border-b border-stone-300/50 pb-6">
+                              <span className="text-xs uppercase tracking-widest font-bold text-stone-500 block mb-2">
+                                {format(new Date(filteredEntries[readingIndex].date), 'EEEE', { locale: de })}
+                              </span>
+                              <h3 className="font-serif text-3xl text-[#1a1a1a]">
+                                {format(new Date(filteredEntries[readingIndex].date), 'd. MMMM yyyy', { locale: de })}
+                              </h3>
+                            </div>
+                            <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
+                              <div 
+                                className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
+                              />
+                            </div>
+                            <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
+                              <div className="flex gap-2">
+                                {filteredEntries[readingIndex].tags.map(tag => (
+                                  <span key={tag} className="text-[10px] uppercase tracking-widest font-bold opacity-50">#{tag}</span>
+                                ))}
                               </div>
-                              <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a]">
-                                <div 
-                                  className="prose prose-lg max-w-none text-[#1a1a1a] leading-relaxed"
-                                  dangerouslySetInnerHTML={{ __html: filteredEntries[readingIndex].content }}
-                                />
-                              </div>
-                              <div className="mt-8 pt-6 border-t border-stone-300/50 flex justify-between items-center">
-                                <div className="flex gap-2">
-                                  {filteredEntries[readingIndex].tags.map(tag => (
-                                    <span key={tag} className="text-[10px] uppercase tracking-widest font-bold opacity-50">#{tag}</span>
-                                  ))}
-                                </div>
-                                <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {filteredEntries.length}</span>
-                              </div>
-                            </motion.div>
-                          </AnimatePresence>
+                              <span className="text-xs font-mono opacity-40">{readingIndex + 1} / {filteredEntries.length}</span>
+                            </div>
+                          </div>
                           
                           <div className="flex gap-4 mt-8">
                             <button
@@ -542,7 +525,6 @@ export default function App() {
                               <ChevronRight size={24} />
                             </button>
                           </div>
-                          <p className="mt-4 text-slate-400 text-sm">Wische nach links oder rechts zum Blättern</p>
                         </>
                       ) : (
                         <EmptyState onNewEntry={() => updateStateAndPush({ isFormOpen: true })} />
@@ -664,38 +646,44 @@ export default function App() {
               )}
             </div>
 
-            <AnimatePresence>
-              {isFormOpen && (
-                <DiaryEntryForm
-                  entry={editingEntry}
-                  onSave={handleSaveEntry}
-                  onCancel={() => {
-                    updateStateAndPush({ isFormOpen: false });
-                    setEditingEntry(null);
-                  }}
-                />
-              )}
-            </AnimatePresence>
+            {isFormOpen && (
+              <DiaryEntryForm
+                entry={editingEntry}
+                onSave={handleSaveEntry}
+                onCancel={() => {
+                  updateStateAndPush({ isFormOpen: false });
+                  setEditingEntry(null);
+                }}
+              />
+            )}
 
             <AIModal
               isOpen={isAIModalOpen}
-              onClose={() => setIsAIModalOpen(false)}
+              onClose={() => {
+                setIsAIModalOpen(false);
+                setAiResult(null);
+                setAiItems([]);
+              }}
               onSummarize={handleSummarize}
               isProcessing={isAIProcessing}
-              title={`${aiItems.length} Elemente ausgewählt`}
+              title={
+                aiItems.length > 1 
+                  ? `${aiItems.length} Elemente ausgewählt` 
+                  : aiItems[0] 
+                    ? ('content' in aiItems[0] ? format(new Date((aiItems[0] as DiaryEntry).date), 'dd.MM.yyyy') : (aiItems[0] as DiaryDocument).name)
+                    : 'Unbenannt'
+              }
+              result={aiResult}
+              onSave={handleSaveAISummary}
             />
 
             {activeTab === 'home' && !isFormOpen && viewMode === 'list' && (
-              <motion.button
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={() => updateStateAndPush({ isFormOpen: true })}
                 className="fixed bottom-12 right-12 w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl shadow-blue-400 z-30 hover:bg-primary-dark transition-all metallic-gloss"
               >
                 <Plus size={32} />
-              </motion.button>
+              </button>
             )}
 
             <ConfirmModal

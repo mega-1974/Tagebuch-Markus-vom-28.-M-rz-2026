@@ -6,7 +6,6 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { UserProfile } from '../types';
-import { motion, AnimatePresence } from 'motion/react';
 
 interface LayoutProps {
   user: UserProfile;
@@ -63,24 +62,9 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
 
-        <motion.div 
-          className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </motion.div>
+        <div className="p-4 md:p-8 w-full min-h-[calc(100vh-120px)] bg-gradient-to-br from-[#2d3436] to-[#1e272e] shadow-2xl metallic-gloss">
+          {children}
+        </div>
       </main>
     </div>
   );

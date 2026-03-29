@@ -8,7 +8,6 @@ import { DiaryEntry, Mood } from '../types';
 import { MOOD_EMOJIS, MOOD_LABELS, MOOD_COLORS } from '../constants';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { motion } from 'motion/react';
 import { Calendar, Tag, Trash2, Edit2, FileDown, Sparkles } from 'lucide-react';
 
 interface DiaryEntryCardProps {
@@ -25,10 +24,7 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
   const formattedDate = format(date, 'EEEE, d. MMMM yyyy', { locale: de });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+    <div
       onClick={() => onClick(entry)}
       className="parchment rounded-none p-6 shadow-sm border border-[#d3cbb8] hover:shadow-md transition-shadow relative group cursor-pointer"
     >
@@ -96,6 +92,6 @@ export const DiaryEntryCard: React.FC<DiaryEntryCardProps> = ({ entry, onDelete,
           ))}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
