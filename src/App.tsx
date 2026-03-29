@@ -527,8 +527,8 @@ export default function App() {
                                   </div>
                                   <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a] w-full overflow-hidden">
                                     <div 
-                                      className="prose prose-lg max-w-full text-[#1a1a1a] leading-relaxed break-words"
-                                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none' }}
+                                      className="max-w-full text-[#1a1a1a] leading-normal"
+                                      style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none', wordBreak: 'normal', overflowWrap: 'normal' }}
                                       dangerouslySetInnerHTML={{ __html: formatContentToParagraphs(filteredEntries[readingIndex].content) }}
                                     />
                                   </div>
@@ -581,7 +581,7 @@ export default function App() {
                                     </h3>
                                   </div>
                                   <div className="flex-1 parchment p-0 rounded-none shadow-none min-h-[400px] text-[#1a1a1a] w-full overflow-hidden">
-                                    <div className="prose prose-lg max-w-full text-[#1a1a1a] leading-relaxed break-words" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none' }}>
+                                    <div className="max-w-full text-[#1a1a1a] leading-normal" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt', hyphens: 'none', wordBreak: 'normal', overflowWrap: 'normal' }}>
                                       <ReactMarkdown>{summaries[readingIndex].content}</ReactMarkdown>
                                     </div>
                                   </div>
