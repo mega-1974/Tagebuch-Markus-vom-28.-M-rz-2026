@@ -15,7 +15,10 @@ import firebaseConfig from '../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services with Long Polling for better compatibility in iframes
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+}, firebaseConfig.firestoreDatabaseId);
+
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
@@ -27,8 +30,9 @@ async function testConnection() {
     await getDocFromServer(doc(db, '_connection_test', 'test'));
     console.log("Firestore connection test successful");
   } catch (error: any) {
+    console.error("Firestore Connection Test Error:", error);
     if (error.message && error.message.includes('the client is offline')) {
-      console.error("Firestore Error: The client is offline. This usually means the Firebase configuration is incorrect or the database hasn't been created in the console.");
+      console.error("Firestore Error: The client is offline. This usually means the Firebase configuration is incorrect, the database hasn't been created in the console, or the domain is not authorized.");
     }
   }
 }

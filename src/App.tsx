@@ -163,18 +163,23 @@ export default function App() {
   };
 
   const handleSummarize = async (prompt: string) => {
-    if (!user || aiItems.length === 0) return;
+    if (!user || aiItems.length === 0) {
+      toast.error('Keine Einträge oder Dokumente zum Zusammenfassen ausgewählt.');
+      return;
+    }
     
     setIsAIProcessing(true);
     try {
-      const apiKey = process.env.GEMINI_API_KEY || ((import.meta as any).env.VITE_GEMINI_API_KEY as string);
+      // Get API Key from environment
+      const apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : '');
       
       if (!apiKey) {
-        toast.error('KI-API-Schlüssel fehlt. Bitte in den Vercel-Umgebungsvariablen (VITE_GEMINI_API_KEY) konfigurieren.');
+        toast.error('KI-API-Schlüssel fehlt. Bitte konfiguriere VITE_GEMINI_API_KEY in deinen Umgebungsvariablen.');
         setIsAIProcessing(false);
         return;
       }
 
+      // Create a new instance inside the function to ensure latest key
       const ai = new GoogleGenAI({ apiKey });
       
       const parts: any[] = [
@@ -210,7 +215,7 @@ export default function App() {
             parts.push({ text: `Dokument (${item.name}):\n` });
             parts.push({
               inlineData: {
-                mimeType: item.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
+                mimeType: item.type,
                 data: base64,
               }
             });
@@ -222,14 +227,14 @@ export default function App() {
         }
       }
 
-      const result = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: { parts },
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [{ role: 'user', parts }],
       });
 
       let summaryText = 'Keine Zusammenfassung generiert.';
       try {
-        summaryText = result.text || summaryText;
+        summaryText = response.text || summaryText;
       } catch (e) {
         console.warn('Could not extract text from response, possibly blocked by safety settings.', e);
         summaryText = 'Die Zusammenfassung konnte aufgrund von Sicherheitsrichtlinien nicht generiert werden.';
